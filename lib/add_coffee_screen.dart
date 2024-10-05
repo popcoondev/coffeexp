@@ -1,5 +1,6 @@
 // add_coffee_screen.dart
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'tasting_feedback_screen.dart';
 import 'utils/label.dart';
 
@@ -53,37 +54,56 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                   ),
                 ],
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Label(mainText: 'Origin', subText: '原産国'),
-                  TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the origin';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _origin = value;
-                    },
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Label(mainText: 'Origin', subText: '原産国'),
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the origin';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _origin = value;
+                          },
+                        ),
+                        Label(mainText: 'Area', subText: 'エリア'),
+                        TextFormField(
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter the area';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _area = value;
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Label(mainText: 'Area', subText: 'エリア'),
-                  TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the area';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _area = value;
-                    },
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      height: 150,
+                      width: double.infinity,
+                      color: Colors.grey[300],
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(0, 0), // 初期位置は仮のものです。実際の位置情報で更新する必要があります。
+                          zoom: 2,
+                        ),
+                        onMapCreated: (GoogleMapController controller) {
+                          // 地図初期化時の処理
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -198,6 +218,42 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Label(mainText: 'Store Photo', subText: '店舗写真'),
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: Center(child: Text('No Photo Selected')),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // 写真選択の実装予定
+                    },
+                    child: Text('Add Photo'),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Label(mainText: 'Store Map', subText: '店舗地図情報'),
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: Center(child: Text('Map Not Available')),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      // 地図情報の追加実装予定
+                    },
+                    child: Text('Add Map Information'),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Label(mainText: 'Store Website', subText: '店舗ウェブサイト'),
                   TextFormField(
                     onSaved: (value) {
@@ -238,6 +294,16 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 写真から情報を取得する処理を実装
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Extracting information from photo...')),
+          );
+        },
+        child: Icon(Icons.camera_alt),
+        tooltip: '写真から情報取得',
       ),
     );
   }
