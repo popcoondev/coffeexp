@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'tasting_feedback_screen.dart';
-import 'utils/label.dart';
+import '../widgets/label.dart';
 
 class AddCoffeeScreen extends StatefulWidget {
   @override

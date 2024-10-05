@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'utils/label.dart';
+import '../widgets/label.dart';
 
 class TastingFeedbackScreen extends StatefulWidget {
   @override
