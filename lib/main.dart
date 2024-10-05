@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'add_coffee_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -60,7 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            // 新規コーヒー記録画面への遷移を実装予定
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddCoffeeScreen()),
+            );
           },
           child: Icon(Icons.add),
         ),
