@@ -8,6 +8,8 @@ import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'dart:html' as html;
 
+import 'screens/login_signup_screen';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -32,6 +34,6 @@ void main() async {
   }
   
   runApp(MaterialApp(
-    home: HomeScreen(),
+    home: LoginSignupScreen(),
   ));
 } 
