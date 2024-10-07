@@ -30,10 +30,25 @@ void main() async {
   if(false) {
   // Use the emulator for Firestore and Authentication
   // FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  // FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
   }
   
-  runApp(MaterialApp(
-    home: LoginSignupScreen(),
-  ));
+  runApp(MyApp());
 } 
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'coffeExp',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/login_signup': (context) => LoginSignupScreen(),
+      },
+    );
+  }
+}

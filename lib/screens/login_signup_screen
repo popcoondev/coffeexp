@@ -76,20 +76,27 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
+      print('Invalid');
       return;
     }
     _formKey.currentState!.save();
 
     try {
       if (_isLogin) {
-        await _auth.signInWithEmailAndPassword(email: _email!, password: _password!);
+        print('Login...');
+        final credential = await _auth.signInWithEmailAndPassword(email: _email!, password: _password!);
+        print(credential.user!.uid);
+
       } else {
-        await _auth.createUserWithEmailAndPassword(email: _email!, password: _password!);
+        print('Sign Up...');
+        final credential = await _auth.createUserWithEmailAndPassword(email: _email!, password: _password!);
+        print(credential.user!.uid);
       }
       Navigator.of(context).pop();
     } catch (e) {
+      print('Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
+        content: Text("e.toString()"),
       ));
     }
   }

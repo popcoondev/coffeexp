@@ -11,6 +11,20 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isListView = true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (FirebaseAuth.instance.currentUser == null) {
+        print('User is not signed in');
+        Navigator.pushReplacementNamed(context, '/login_signup');
+      }
+      else {
+        print('User is signed in');
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
@@ -18,6 +32,41 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           title: Text('coffeExp'),
           actions: [
+            //user icon
+            TextButton(
+              child: 
+                Row(children: [
+                  Icon(Icons.account_circle),
+                  //メールアドレスを表示
+                  Text(FirebaseAuth.instance.currentUser!.email!)
+                ]),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text('Account'),
+                      content: Text('Email: ${FirebaseAuth.instance.currentUser!.email}'),
+                      actions: [
+                        TextButton(
+                          child: Text('Cancel'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                        TextButton(
+                          child: Text('Sign out'),
+                          onPressed: () async {
+                            await FirebaseAuth.instance.signOut();
+                            Navigator.pushReplacementNamed(context, '/login_signup');
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),           
             IconButton(
               icon: Icon(isListView ? Icons.grid_view : Icons.list),
               onPressed: () {
@@ -63,6 +112,8 @@ class _HomeScreenState extends State<HomeScreen> {
 class CoffeeListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // ユーザーのコーヒーデータをFirestoreから取得して表示予定
+    
     return ListView.builder(
       itemCount: 10, // 仮のデータ数
       itemBuilder: (context, index) {
