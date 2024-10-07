@@ -1,84 +1,54 @@
+// main.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'screens/home_screen.dart';
+import 'dart:html' as html;
+
+import 'screens/login_signup_screen';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MaterialApp(
-    home: HomeScreen(),
-  ));
-}
-class HomeScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('coffeExp'),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () {
-                // メニューの操作を実装
-              },
-            ),
-          ],
-          bottom: TabBar(
-            tabs: [
-              Tab(text: 'My Coffees'),
-              Tab(text: 'Add Coffee'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            // コーヒー一覧
-            CoffeeListView(),
-            // 新規コーヒー追加
-            AddCoffeeView(),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
-class CoffeeListView extends StatelessWidget {
+  if(false) {
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    String googleMapsApiKey = remoteConfig.getString('google_maps_api_key');
+    // JavaScriptでGoogle Maps APIスクリプトを動的に追加
+    final script = html.ScriptElement();
+    // script.src = 'https://maps.googleapis.com/maps/api/js?key=$googleMapsApiKey';
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDbeIXlV-_2mOzJ-FgYChk7Bz6L5UgPaIY';
+    html.document.head?.append(script);
+    print('Google Maps API key: $googleMapsApiKey');
+  }
+
+  if(false) {
+  // Use the emulator for Firestore and Authentication
+  // FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  }
+  
+  runApp(MyApp());
+} 
+
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: 10, // 仮のデータ数
-      itemBuilder: (context, index) {
-        return Card(
-          margin: EdgeInsets.all(8.0),
-          child: ListTile(
-            leading: Icon(Icons.local_cafe),
-            title: Text('Coffee $index'),
-            subtitle: Text('Description for Coffee $index'),
-            onTap: () {
-              // コーヒー詳細画面への遷移を実装
-            },
-          ),
-        );
+    return MaterialApp(
+      title: 'coffeExp',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/login_signup': (context) => LoginSignupScreen(),
       },
-    );
-  }
-}
-
-class AddCoffeeView extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ElevatedButton(
-        onPressed: () {
-          // 新規コーヒーの追加操作を実装
-        },
-        child: Text('Add a New Coffee'),
-      ),
     );
   }
 }
