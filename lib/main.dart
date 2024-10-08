@@ -44,7 +44,57 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'coffeExp',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        // アプリ全体の配色を設定
+        // アクセントカラー: 深いグリーン (#003F2D) とゴールド (#D4AF37)
+        // サブカラー: 明るいグリーン (#00A896)
+        // 背景とテキストのベースカラー: ホワイト (#FFFFFF) とスレートグレー (#4A4A4A) を基調に、洗練された印象を演出。
+        brightness: Brightness.light,  // 明るいテーマ（ダークテーマの場合は .dark を使用）
+        primaryColor: Color(0xFFD4AF37),  // アクセントカラー
+        scaffoldBackgroundColor: Color(0xFFFFFFFF),  // 全体の背景色
+        textTheme: TextTheme(
+          bodyMedium: TextStyle(color: Color(0xFF4A4A4A)),  // 一般的なテキストの色
+          bodySmall: TextStyle(color: Color(0xFF7B7B7B)),  // サブテキストの色
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF00A896),  // 明るいグリーン
+            foregroundColor: Colors.white,  // テキストはホワイト
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: Color(0xFF00A896),  // 明るいグリーン
+
+          ),
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Color(0xFF003F2D),  // 深いグリーン
+          titleTextStyle: TextStyle(
+            color: Colors.white,  // テキストはホワイト
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(
+            color: Colors.white,  // アイコンもホワイト
+          ),
+        ),
+        //tabbarの色
+        tabBarTheme: TabBarTheme(
+          indicatorColor: Color(0xFFD4AF37),  // ゴールド
+          labelColor: Colors.white,  // 選択されたタブ
+          unselectedLabelColor: Colors.white.withOpacity(0.5),  // 選択されていないタブ
+        ),
+        dividerColor: Color(0xFFE0E0E0),  // ディバイダーの色
+        // floatingActionButtonの色
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFFD4AF37),  // ゴールド
+          foregroundColor: Colors.white
+
+          
+        ),
       ),
       initialRoute: '/',
       routes: {
