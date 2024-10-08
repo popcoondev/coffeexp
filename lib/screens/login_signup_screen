@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class LoginSignupScreen extends StatefulWidget {
   @override
@@ -91,6 +93,16 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
         print('Sign Up...');
         final credential = await _auth.createUserWithEmailAndPassword(email: _email!, password: _password!);
         print(credential.user!.uid);
+
+        await FirebaseFirestore.instance
+        .collection('users')
+        .doc(credential.user!.uid)  // UIDをドキュメントIDとして使用
+        .set({
+          'email': credential.user!.email,
+          // 'name': username,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+
       }
       Navigator.of(context).pop();
     } catch (e) {

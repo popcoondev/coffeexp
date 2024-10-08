@@ -28,7 +28,9 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     final String testUid = 'test_user_123';
+    User? user;
 
+    //　テストユーザーを作成
     void createUser(String userId) async {
       print('Creating user with ID: $userId...');
       FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -43,6 +45,21 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
         print('Failed to create user: $e');
       }
    }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      // ユーザーがログインしていない場合はログイン画面に遷移
+      if (FirebaseAuth.instance.currentUser == null) {
+        print('User is not signed in');
+        Navigator.pushReplacementNamed(context, '/login_signup');
+      } else {
+        print('User is signed in as ${FirebaseAuth.instance.currentUser!.email}');
+        user = FirebaseAuth.instance.currentUser;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +81,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Coffee Name', subText: 'コーヒー名'),
+                  Label(mainText: 'Coffee Name', subText: 'コーヒー名', isRequired: true),
                   TextFormField(
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -294,12 +311,14 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               // 保存ボタン
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    _formKey.currentState?.save();
+                  if (_formKey.currentState!.validate()) { // バリデーション成功
+                    print('Form is valid. Saving data...');
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Processing Data')));
+                    _formKey.currentState!.save();
                     
                     // Coffeeモデルを作成
                     Coffee newCoffee = Coffee(
-                      name: _coffeeName,
+                      name: _coffeeName!,
                       origin: _origin,
                       region: _region,
                       variety: _variety,
@@ -315,7 +334,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                     // Firestoreに保存
                     print('Adding coffee to Firestore...');
                     
-                    _firestore.collection('users').doc(testUid).collection('coffees').add(newCoffee.toJson()).then((value) {
+                    _firestore.collection('users').doc(user!.uid).collection('coffees').add(newCoffee.toJson()).then((value) {
                       print('Coffee added successfully');
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Coffee added successfully')),
@@ -327,6 +346,10 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                         SnackBar(content: Text('Failed to add coffee: $error')),
                       );
                     });
+                  }
+                  else {
+                    print('Form is invalid. Cannot save data.');
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Validation Failed')));
                   }
                 },
                 child: Text('Save'),

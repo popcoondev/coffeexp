@@ -53,5 +53,6 @@ storage.rules
 
 # API keys
 lib/firebase_options.dart
+lib/google_map_options.dart
 google-services.json
 GoogleService-Info.plist

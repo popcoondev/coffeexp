@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'add_coffee_screen.dart';
+import 'coffee_card_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -14,12 +16,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+
+      // ユーザーがログインしていない場合はログイン画面に遷移
       if (FirebaseAuth.instance.currentUser == null) {
         print('User is not signed in');
         Navigator.pushReplacementNamed(context, '/login_signup');
       }
       else {
-        print('User is signed in');
+        print('User is signed in as ${FirebaseAuth.instance.currentUser!.email}');
       }
     });
   }
@@ -112,24 +116,60 @@ class _HomeScreenState extends State<HomeScreen> {
 class CoffeeListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // ユーザーのコーヒーデータをFirestoreから取得して表示予定
-    
-    return ListView.builder(
-      itemCount: 10, // 仮のデータ数
-      itemBuilder: (context, index) {
-        return Card(
-          margin: EdgeInsets.all(8.0),
-          child: ListTile(
-            leading: Icon(Icons.local_cafe),
-            title: Text('Coffee $index'),
-            subtitle: Text('Description for Coffee $index'),
-            onTap: () {
-              // コーヒー詳細画面への遷移を実装予定
+    // ユーザーのコーヒーデータをFirestoreから取得して表示する
+    if (FirebaseAuth.instance.currentUser == null) {
+      return Center(child: Text('User is not signed in'));
+    }
+    else {
+      return StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection('coffees')
+          .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(child: Text('No coffee data available.'));
+          }
+
+          var coffeeList = snapshot.data!.docs;
+          // データの確認
+          print('coffeeList length: ${coffeeList.length}');
+          for (var coffee in coffeeList) {
+            print('coffee data: ${coffee.data()}');
+          }
+
+          // ListView.builder でデータを表示
+          return ListView.builder(
+            itemCount: coffeeList.length,
+            itemBuilder: (context, index) {
+              var coffeeData = coffeeList[index].data() as Map<String, dynamic>;  // ここでMap<String, dynamic>にキャスト
+
+              // デバッグ: どのデータが取得できているか確認
+              print('Displaying coffee: ${coffeeData['name']}');
+
+              return ListTile(
+                title: Text(coffeeData['name'] ?? 'No name'),  // データがnullでないことを確認
+                subtitle: Text('Roast level: ${coffeeData['roastLevel'] ?? 'No level'}'),
+                onTap: () {
+                  // タップしたら詳細画面に遷移
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CoffeeCardScreen(coffeeData: coffeeData),
+                    ),
+                  );
+                },
+              );
             },
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    }
+
   }
 }
 

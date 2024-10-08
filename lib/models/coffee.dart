@@ -1,5 +1,5 @@
 class Coffee {
-  String? name;
+  String name;
   String? origin;
   String? region;
   String? variety;
@@ -12,7 +12,7 @@ class Coffee {
   DateTime? roastDate;
 
   Coffee({
-    this.name,
+    required this.name,
     this.origin,
     this.region,
     this.variety,
