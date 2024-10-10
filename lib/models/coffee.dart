@@ -1,5 +1,5 @@
 class Coffee {
-  String name;
+  String coffeeName;
   String? origin;
   String? region;
   String? variety;
@@ -12,7 +12,7 @@ class Coffee {
   DateTime? roastDate;
 
   Coffee({
-    required this.name,
+    required this.coffeeName,
     this.origin,
     this.region,
     this.variety,
@@ -27,7 +27,7 @@ class Coffee {
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'coffeeName': coffeeName,
       'origin': origin,
       'region': region,
       'variety': variety,

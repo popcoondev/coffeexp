@@ -149,10 +149,10 @@ class CoffeeListView extends StatelessWidget {
               var coffeeData = coffeeList[index].data() as Map<String, dynamic>;  // ここでMap<String, dynamic>にキャスト
 
               // デバッグ: どのデータが取得できているか確認
-              print('Displaying coffee: ${coffeeData['name']}');
+              print('Displaying coffee: ${coffeeData['coffeeName']}');
 
               return ListTile(
-                title: Text(coffeeData['name'] ?? 'No name'),  // データがnullでないことを確認
+                title: Text(coffeeData['coffeeName'] ?? 'No name'),  // データがnullでないことを確認
                 subtitle: Text('Roast level: ${coffeeData['roastLevel'] ?? 'No level'}'),
                 onTap: () {
                   // タップしたら詳細画面に遷移

@@ -1,5 +1,6 @@
 // main.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'coffeExp',
+      localizationsDelegates: [
+        CountryLocalizations.delegate,
+      ],
       theme: ThemeData(
         // アプリ全体の配色を設定
         // アクセントカラー: 深いグリーン (#003F2D) とゴールド (#D4AF37)
