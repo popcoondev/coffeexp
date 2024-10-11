@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 // import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/coffee.dart';
+import '../utils/countrys.dart';
 import 'tasting_feedback_screen.dart';
 import '../widgets/label.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,17 +22,21 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   final _formKey = GlobalKey<FormState>();
   String? _coffeeName;
   String? _origin;
-  String? _originCode;  
+  String? _originCode;
   String? _region;
+  String? _farm;
+  String? _altitude;
   String? _variety;
   String? _process;
-  String? _farm;
   String? _storeName;
   String? _storeLocation;
   String? _storeWebsite;
   String? _roastLevel;
-  DateTime? _roastDate;
+  String? _roastDate;
   final _originController = TextEditingController();
+  final _roastDateController = TextEditingController();
+  final _processController = TextEditingController();
+  final _varietyController = TextEditingController();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     final String testUid = 'test_user_123';
@@ -109,156 +114,174 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                   ),
                 ],
               ),
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Label(mainText: 'Origin', subText: '原産国'),
-                        Row(
-                          children: [
-                            Expanded(child:
-                              TextFormField(
-                                validator: (value) {
-                                  return null;
-                                },
-                                onSaved: (value) {
-                                  print('onSaved: $value');
-                                  _origin = value;
-                                },
-                                controller: _originController,
-                              ),
-                            ),
-                            CountoryPicker(),
-                          ],
-                        ),
-                        Label(mainText: 'Region', subText: '地域'),
+                  Label(mainText: 'Origin', subText: '原産国'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                    children: [
+                      Expanded(child:
                         TextFormField(
                           validator: (value) {
                             return null;
                           },
                           onSaved: (value) {
                             print('onSaved: $value');
-                            _region = value;
+                            _origin = value;
+                          },
+                          controller: _originController,
+                          onChanged: (value) {
+                            _origin = value;
+                            _originCode = '';
+
                           },
                         ),
-                        Label(mainText: 'Farm', subText: '農園'),
-                        TextFormField(
-                          validator: (value) {
-                            return null;
-                          },
-                          onSaved: (value) {
-                            print('onSaved: $value');
-                            _farm = value;
-                          },
-                        ),
-                      ],
-                    ),
+                      ),
+                      CountryPicker(),
+                      
+                    ],
                   ),
-                  
-                  // Expanded(
-                  //   flex: 1,
-                  //   child: // Google Maps Webを表示するウィジェットを追加
-                  //   GoogleMap(
-                  //     initialCameraPosition: CameraPosition(
-                  //       target: LatLng(35.681236, 139.767125),
-                  //       zoom: 10,
-                  //     ),
-                  //   ),
-                  // ),
+                  Label(mainText: 'Region', subText: '地域'),
+                  TextFormField(
+                    validator: (value) {
+                      return null;
+                    },
+                    onSaved: (value) {
+                      print('onSaved: $value');
+                      _region = value;
+                    },
+                  ),
+                  Label(mainText: 'Farm/Producer', subText: '農園/生産者'),
+                  TextFormField(
+                    validator: (value) {
+                      return null;
+                    },
+                    onSaved: (value) {
+                      print('onSaved: $value');
+                      _farm = value;
+                    },
+                  ),
+                  Label(mainText: 'Altitude', subText: '標高(m)'),
+                  TextFormField(
+                    validator: (value) {
+                      return null;
+                    },
+                    onSaved: (value) {
+                      print('onSaved: $value');
+                      _altitude = value;
+                    },
+                  ),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Label(mainText: 'Variety', subText: '品種'),
-                  TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the variety';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      print('onSaved: $value');
-                      _variety = value;
-                    },
-                  ),
+                  Row(children: [
+                    Expanded(child:
+                      TextFormField(
+                        validator: (value) {
+                          return null;
+                        },
+                        onSaved: (value) {
+                          print('onSaved: $value');
+                          _variety = value;
+                        },
+                        controller: _varietyController,
+                      ),
+                    ),
+                  //品種選択ダイアログ
+                  varietySelectButton(context),
+                  ],),
+                  SizedBox(height: 10),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Label(mainText: 'Process', subText: 'プロセス'),
+                  Row(children: [
+                    Expanded(child: 
+                      TextFormField(
+                        validator: (value) {
+                        return null;
+                        },
+                        onSaved: (value) {
+                        print('onSaved: $value');
+                        _process = value;
+                        },
+                        controller: _processController,
+                      ),
+                    ),
+                    //プロセス選択ダイアログ
+                    processSelectButton(context),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+
+              // 焙煎情報
+              Text('Roast Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Label(mainText: 'Roast Level', subText: '焙煎レベル'),
                   TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the process';
-                      }
-                      return null;
+                    onSaved: (value) {
+                      _roastLevel = value;
                     },
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Label(mainText: 'Roast Date', subText: '焙煎日'),
+                  TextFormField(
+                    onTap: () async {
+                      FocusScope.of(context).requestFocus(new FocusNode());
+                      DateTime? date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      print('Roast Date: $date');
+                      setState(() {
+                        if(date != null) {
+                          //yyyy/MM/dd形式に変換 0埋め
+                          String formattedDate = '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+                          _roastDateController.text = formattedDate;
+                          
+                        }
+                      });
+                    },
+                    controller: _roastDateController,
                     onSaved: (value) {
                       print('onSaved: $value');
-                      _process = value;
+                      _roastDate = value;
                     },
                   ),
                 ],
               ),
 
-
-              SizedBox(height: 20),
-
-              // // 焙煎情報
-              // Text('Roast Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Roast Level', subText: '焙煎レベル'),
-              //     TextFormField(
-              //       onSaved: (value) {
-              //         _roastLevel = value;
-              //       },
-              //     ),
-              //   ],
-              // ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Roast Date', subText: '焙煎日'),
-              //     TextFormField(
-              //       onTap: () async {
-              //         FocusScope.of(context).requestFocus(new FocusNode());
-              //         DateTime? date = await showDatePicker(
-              //           context: context,
-              //           initialDate: DateTime.now(),
-              //           firstDate: DateTime(2000),
-              //           lastDate: DateTime(2101),
-              //         );
-              //         setState(() {
-              //           _roastDate = date;
-              //         });
-              //       },
-              //     ),
-              //   ],
-              // ),
-
               // SizedBox(height: 20),
 
               // // 店舗情報
-              // Text('Store Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Store Name', subText: '店舗名'),
-              //     TextFormField(
-              //       onSaved: (value) {
-              //         _storeName = value;
-              //       },
-              //     ),
-              //   ],
-              // ),
+              Text('Store Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Label(mainText: 'Store Name', subText: '店舗名'),
+                  TextFormField(
+                    onSaved: (value) {
+                      _storeName = value;
+                    },
+                  ),
+                ],
+              ),
               // Column(
               //   crossAxisAlignment: CrossAxisAlignment.start,
               //   children: [
@@ -306,17 +329,17 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               //     ),
               //   ],
               // ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Store Website', subText: '店舗ウェブサイト'),
-              //     TextFormField(
-              //       onSaved: (value) {
-              //         _storeWebsite = value;
-              //       },
-              //     ),
-              //   ],
-              // ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Label(mainText: 'Store Website', subText: '店舗ウェブサイト'),
+                  TextFormField(
+                    onSaved: (value) {
+                      _storeWebsite = value;
+                    },
+                  ),
+                ],
+              ),
 
               // SizedBox(height: 20),
 
@@ -347,14 +370,15 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       coffeeName: _coffeeName!,
                       origin: _origin,
                       region: _region,
+                      farm: _farm,
+                      altitude: _altitude,
                       variety: _variety,
                       process: _process,
-                      farm: _farm,
-                      // storeName: _storeName,
+                      storeName: _storeName,
                       // storeLocation: _storeLocation,
-                      // storeWebsite: _storeWebsite,
-                      // roastLevel: _roastLevel,
-                      // roastDate: _roastDate,
+                      storeWebsite: _storeWebsite,
+                      roastLevel: _roastLevel,
+                      roastDate: _roastDate,
                     );
                     print('New Coffee: $newCoffee');
 
@@ -372,8 +396,8 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                 },
                 child: Text('Save'),
               ),
-
             ],
+
           ),
         ),
       ),
@@ -392,16 +416,15 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
     );
   }
 
-  Widget CountoryPicker() {
+  Widget CountryPicker() {
     //CountryCodePickerを使って国名から国コードを取得
     return CountryCodePicker(
       onChanged: (CountryCode countryCode) {
         print('onChanged: $countryCode');
-
         print('Country name: ${countryCode.name}');
         // _originを更新する
         setState(() {
-          _originController.text = countryCode.name!;
+          _originController.text = countryCode.localize(context).name!;
           _originCode = countryCode.code;
         });
       
@@ -413,32 +436,171 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
       
       //有名なコーヒー国のみ
       favorite: const [
-      // 中南米:
-        '+502', 'GT', //: グアテマラ
-        '+55', 'BR', //: ブラジル
-        '+57', 'CO', //: コロンビア
       // アフリカ:
         '+251', 'ET', //: エチオピア
         '+254', 'KE', //: ケニア
         '+255', 'TZ', //: タンザニア
-      // アジア:
-        '+62', 'ID', //: インドネシア
-        '+86', 'CN', //: 中国
+        '+250', 'RW', //: ルワンダ        
+      // 中南米:
+        '+57', 'CO', //: コロンビア
+        '+502', 'GT', //: グアテマラ
+        '+503', 'SV', //: エルサルバドル
+        '+507', 'PA', //: パナマ
       ],
       hideMainText: true,
       builder: (countryCode) {
         print('builder: ${countryCode?.dialCode}');
-        if (countryCode!.dialCode == '+0') {
-          return Text('国名から選択');
-        }
-        return //flagUriを表示
-        Image.asset(
-          countryCode.flagUri!,
-          package: 'country_code_picker',
-          width: 32.0,
-          height: 32.0,
-        );                           
-      }, 
+        // if (countryCode!.dialCode == '+0') {
+          return TextButton(onPressed: null, 
+            child: Text('国名から選択', 
+            //スタイルは文字色0xFF00A896でradius8のボタン
+            style: TextStyle(color: Color(0xFF00A896), fontSize: 12,),
+            ),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+          
+        },
+        // return 
+        // Container(
+        //     padding: EdgeInsets.all(8.0),
+        //     child:
+        //     Row(
+        //       children: <Widget>[
+        //         Image.asset(
+        //           countryCode.flagUri!,
+        //           package: 'country_code_picker',
+        //           width: 32.0,
+        //           height: 32.0,
+        //         ),
+        //         SizedBox(width: 8.0),
+        //         Text(countryCode.name!),
+        //         SizedBox(width: 8.0),
+                
+        //       ],
+        //     ),
+        // );
+                     
+      // }, 
+    );
+  }
+
+  Widget varietySelectButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        final select = showDialog(context: context, builder: (context) {
+          return SimpleDialog(
+            title: Text('Variety'),
+            children: [
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'Typica';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('Typica'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'Bourbon';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('Bourbon'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'Caturra';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('Caturra'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'SL28';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('SL28'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'Geisha';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('Geisha'),
+              ),
+            ],
+          );
+        });
+      },
+      child: Text('候補から選択', style: TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      ),
+    );
+  }
+
+  Widget processSelectButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        final select = showDialog(context: context, builder: (context) {
+          return SimpleDialog(
+            title: Text('Process'),
+            children: [
+              SimpleDialogOption(
+                onPressed: () {
+                  _process = 'Washed';
+                  _processController.text = _process!;
+                  Navigator.pop(context);
+                },
+                child: Text('Washed'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _process = 'Natural';
+                  _processController.text = _process!;
+                  Navigator.pop(context);
+                },
+                child: Text('Natural'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _process = 'Honey';
+                  _processController.text = _process!;
+                  Navigator.pop(context);
+                },
+                child: Text('Honey'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _process = 'Anaerobic';
+                  _processController.text = _process!;
+                  Navigator.pop(context);
+                },
+                child: Text('Anaerobic'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  _process = 'Carbonic Maceration';
+                  _processController.text = _process!;
+                  Navigator.pop(context);
+                },
+                child: Text('Carbonic Maceration'),
+              ),
+            ],
+          );
+        });
+      },
+      child: Text('候補から選択', style: TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      ),
     );
   }
 
@@ -485,9 +647,10 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
           _coffeeName = coffeeData?['coffeeName'];
           _origin = coffeeData?['origin'];
           _region = coffeeData?['region'];
+          _farm = coffeeData?['farm'];
+          _altitude = coffeeData?['altitude'];
           _variety = coffeeData?['variety'];
           _process = coffeeData?['process'];
-          _farm = coffeeData?['farm'];
           // _storeName = coffeeData?['storeName'];
           // _storeLocation = coffeeData?['storeLocation'];
           // _storeWebsite = coffeeData?['storeWebsite'];

@@ -9,6 +9,7 @@ import 'firebase_options.dart';
 import 'google_map_options.dart';
 import 'screens/home_screen.dart';
 import 'dart:html' as html;
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/login_signup_screen';
 
@@ -44,9 +45,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'coffeExp',
+      locale: Locale('ja', 'JP'),
       localizationsDelegates: [
         CountryLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        
       ],
+      supportedLocales: [
+        Locale('ja', 'JP'),
+    ],
       theme: ThemeData(
         // アプリ全体の配色を設定
         // アクセントカラー: 深いグリーン (#003F2D) とゴールド (#D4AF37)
@@ -73,6 +81,15 @@ class MyApp extends StatelessWidget {
             foregroundColor: Color(0xFF00A896),  // 明るいグリーン
 
           ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF00A896)),  // 明るいグリーン
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFF7B7B7B)),  // スレートグレー
+          ),
+          
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: Color(0xFF003F2D),  // 深いグリーン

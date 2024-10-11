@@ -9,13 +9,30 @@ class Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Text(mainText, style: TextStyle(fontSize: 16)),
-        SizedBox(width: 8),
-        Text(subText, style: TextStyle(fontSize: 12)),
-        // 入力必須の場合は赤い星を表示
-        if (isRequired) Text('*', style: TextStyle(color: Colors.red)),
+        SizedBox(height: 8),
+        Row(
+          children: [
+            Text(mainText, 
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            SizedBox(width: 8),
+            Text(subText, 
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            // 入力必須の場合は赤い星を表示
+            if (isRequired) Text(' * ', style: TextStyle(color: const Color.fromARGB(224, 244, 67, 54), fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ],
     );
   }

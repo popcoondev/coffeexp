@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // ユーザーがログインしていない場合はログイン画面に遷移
       if (FirebaseAuth.instance.currentUser == null) {
         print('User is not signed in');
-        Navigator.pushReplacementNamed(context, '/login_signup');
+        Navigator.pushNamed(context, '/login_signup');
       }
       else {
         print('User is signed in as ${FirebaseAuth.instance.currentUser!.email}');
