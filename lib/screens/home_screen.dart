@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../utils/strings.dart';
 import 'add_coffee_screen.dart';
 import 'coffee_card_screen.dart';
 
@@ -34,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('coffeExp'),
+          title: Text(Strings.homeScreenAppBarTitle),
           actions: [
             //user icon
             TextButton(
@@ -49,17 +50,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: Text('Account'),
-                      content: Text('Email: ${FirebaseAuth.instance.currentUser!.email}'),
+                      title: Text(Strings.homeScreenAlertDialogTitle),
+                      content: Text('${Strings.homeScreenAlertDialogContent} ${FirebaseAuth.instance.currentUser!.email}'),
                       actions: [
                         TextButton(
-                          child: Text('Cancel'),
+                          child: Text(Strings.homeScreenAlertDialogCancel),
                           onPressed: () {
                             Navigator.pop(context);
                           },
                         ),
                         TextButton(
-                          child: Text('Sign out'),
+                          child: Text(Strings.homeScreenAlertDialogSignOut),
                           onPressed: () async {
                             await FirebaseAuth.instance.signOut();
                             Navigator.pushReplacementNamed(context, '/login_signup');
@@ -88,8 +89,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'My Coffees'),
-              Tab(text: 'Favorites'),
+              Tab(text: Strings.homeScreenTabBarMyCoffees),
+              Tab(text: Strings.homeScreenTabBarFavorites),
             ],
           ),
         ),
@@ -118,7 +119,7 @@ class CoffeeListView extends StatelessWidget {
   Widget build(BuildContext context) {
     // ユーザーのコーヒーデータをFirestoreから取得して表示する
     if (FirebaseAuth.instance.currentUser == null) {
-      return Center(child: Text('User is not signed in'));
+      return Center(child: Text(Strings.homeScreenUserAuthError));
     }
     else {
       return StreamBuilder<QuerySnapshot>(
@@ -132,7 +133,7 @@ class CoffeeListView extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No coffee data available.'));
+            return Center(child: Text(Strings.homeScreenUserCoffeeDataNone));
           }
 
           var coffeeList = snapshot.data!.docs;

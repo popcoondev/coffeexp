@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/coffee.dart';
 import '../utils/countrys.dart';
+import '../utils/strings.dart';
 import 'tasting_feedback_screen.dart';
 import '../widgets/label.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -84,7 +85,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add New Coffee'),
+        title: Text(Strings.addCofffeScreenAppBarTitle),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -93,16 +94,17 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
           child: ListView(
             children: [
               // コーヒー豆の情報
-              Text('Coffee Bean Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(Strings.addCofffeScreenCoffeeBeanLabel, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Coffee Name', subText: 'コーヒー名', isRequired: true),
+                  Label(mainText: Strings.addCofffeScreenCofeeNameFormLabel, 
+                    subText: Strings.addCofffeScreenCofeeNameFormLabelSub, isRequired: true),
                   TextFormField(
                     validator: (value) {
                       print('validator: $value');
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the coffee name';
+                        return Strings.addCofffeScreenCofeeNameFormError;
                       }
                       return null;
                     },
@@ -534,6 +536,24 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                   Navigator.pop(context);
                 },
                 child: Text('Geisha'),
+              ),
+              // Heirloom品種
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'Heirloom';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('Heirloom'),
+              ),
+              // Robusta品種
+              SimpleDialogOption(
+                onPressed: () {
+                  _variety = 'Robusta';
+                  _varietyController.text = _variety!;
+                  Navigator.pop(context);
+                },
+                child: Text('Robusta'),
               ),
             ],
           );
