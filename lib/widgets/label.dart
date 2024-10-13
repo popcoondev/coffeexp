@@ -25,12 +25,12 @@ class Label extends StatelessWidget {
             Text(subText, 
             style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.normal,
                 color: Theme.of(context).primaryColor,
               ),
             ),
             // 入力必須の場合は赤い星を表示
-            if (isRequired) Text(' * ', style: TextStyle(color: const Color.fromARGB(224, 244, 67, 54), fontSize: 16, fontWeight: FontWeight.bold)),
+            if (isRequired) Text(' * ', style: TextStyle(color: const Color.fromARGB(180, 244, 67, 54), fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
       ],

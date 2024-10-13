@@ -113,8 +113,6 @@ class MyApp extends StatelessWidget {
         floatingActionButtonTheme: FloatingActionButtonThemeData(
           backgroundColor: Color(0xFFD4AF37),  // ゴールド
           foregroundColor: Colors.white
-
-          
         ),
       ),
       initialRoute: '/',

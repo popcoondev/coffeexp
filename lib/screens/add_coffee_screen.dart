@@ -119,7 +119,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Origin', subText: '原産国'),
+                  Label(mainText: Strings.addCofffeScreenCountryFormLabel, subText: Strings.addCofffeScreenCountryFormLabelSub),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                     children: [
@@ -144,7 +144,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       
                     ],
                   ),
-                  Label(mainText: 'Region', subText: '地域'),
+                  Label(mainText: Strings.addCofffeScreenRegionFormLabel, subText: Strings.addCofffeScreenRegionFormLabelSub),
                   TextFormField(
                     validator: (value) {
                       return null;
@@ -154,7 +154,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       _region = value;
                     },
                   ),
-                  Label(mainText: 'Farm/Producer', subText: '農園/生産者'),
+                  Label(mainText: Strings.addCofffeScreenFarmFormLabel, subText: Strings.addCofffeScreenFarmFormLabelSub),
                   TextFormField(
                     validator: (value) {
                       return null;
@@ -164,7 +164,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       _farm = value;
                     },
                   ),
-                  Label(mainText: 'Altitude', subText: '標高(m)'),
+                  Label(mainText: Strings.AddCoffeeScreenAltitudeFormLabel, subText: Strings.AddCoffeeScreenAltitudeFormLabelSub),
                   TextFormField(
                     validator: (value) {
                       return null;
@@ -179,7 +179,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Variety', subText: '品種'),
+                  Label(mainText: Strings.AddCoffeeScreenVarietyFormLabel, subText: Strings.AddCoffeeScreenVarietyFormLabelSub),
                   Row(children: [
                     Expanded(child:
                       TextFormField(
@@ -202,7 +202,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Process', subText: 'プロセス'),
+                  Label(mainText: Strings.AddCoffeeScreenProcessFormLabel, subText: Strings.AddCoffeeScreenProcessFormLabelSub),
                   Row(children: [
                     Expanded(child: 
                       TextFormField(
@@ -225,23 +225,33 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               SizedBox(height: 20),
 
               // 焙煎情報
-              Text('Roast Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Column(
+              Text(Strings.addCofffeScreenRoastInformationLabel, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Roast Level', subText: '焙煎レベル'),
-                  TextFormField(
-                    onSaved: (value) {
+                  Label(mainText: Strings.AddCoffeeScreenRoastLevelFormLabel, subText: Strings.AddCoffeeScreenRoastLevelFormLabelSub),
+                  Row(
+                  children: [
+                    Expanded(
+                    child: TextFormField(
+                      onSaved: (value) {
                       _roastLevel = value;
-                    },
+                      },
+                    ),
+                    ),
+                    roastLevelSelectButton(context),
+                  ],
                   ),
                 ],
-              ),
+                ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Roast Date', subText: '焙煎日'),
+                  Label(mainText: Strings.AddCoffeeScreenRoastDateFormLabel, subText: Strings.AddCoffeeScreenRoastDateFormLabelSub),
                   TextFormField(
+                    // decoration: const InputDecoration(
+                    //   hintText: 'YYYY/MM/DD',
+                    // ),
                     onTap: () async {
                       FocusScope.of(context).requestFocus(new FocusNode());
                       DateTime? date = await showDatePicker(
@@ -260,6 +270,16 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                         }
                       });
                     },
+                    validator: (value) {
+                      // yyyy/MM/dd形式で入力されているかチェック
+                      if (value != null) {
+                        if (!RegExp(r'^\d{4}/\d{2}/\d{2}$').hasMatch(value)) {
+                          return Strings.AddCoffeeScreenRoastDateFormError;
+                        }
+                      }
+                      return null;
+                      
+                    },
                     controller: _roastDateController,
                     onSaved: (value) {
                       print('onSaved: $value');
@@ -272,11 +292,11 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               // SizedBox(height: 20),
 
               // // 店舗情報
-              Text('Store Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(Strings.addCofffeScreenStoreInformationLabel, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Store Name', subText: '店舗名'),
+                  Label(mainText: Strings.AddCoffeeScreenStoreNameFormLabel, subText: Strings.AddCoffeeScreenStoreNameFormLabelSub),
                   TextFormField(
                     onSaved: (value) {
                       _storeName = value;
@@ -334,7 +354,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Label(mainText: 'Store Website', subText: '店舗ウェブサイト'),
+                  Label(mainText: Strings.AddCoffeeScreenStoreWebSiteFormLabel, subText: Strings.AddCoffeeScreenStoreWebSiteFormLabelSub),
                   TextFormField(
                     onSaved: (value) {
                       _storeWebsite = value;
@@ -396,7 +416,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Validation Failed')));
                   }
                 },
-                child: Text('Save'),
+                child: Text(Strings.addCofffeScreenSaveButton),
               ),
             ],
 
@@ -404,17 +424,18 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 写真から情報を取得する処理を実装
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(content: Text('Extracting information from photo...')),
-          // );
-          createUser(testUid);
-          fetchUserData(testUid);
-        },
-        child: Icon(Icons.camera_alt),
-        tooltip: '写真から情報取得',
-      ),
+          onPressed: () {
+            // 写真から情報を取得する処理を実装
+            // ScaffoldMessenger.of(context).showSnackBar(
+            //   SnackBar(content: Text('Extracting information from photo...')),
+            // );
+            createUser(testUid);
+            fetchUserData(testUid);
+          },
+          child: Icon(Icons.camera_alt),
+          tooltip: Strings.addCofffeScreenFloatingActionButtonToolTip,
+        ),
+      
     );
   }
 
@@ -454,7 +475,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
         print('builder: ${countryCode?.dialCode}');
         // if (countryCode!.dialCode == '+0') {
           return TextButton(onPressed: null, 
-            child: Text('国名から選択', 
+            child: Text(Strings.addCofffeScreenCountryPickerLabel,
             //スタイルは文字色0xFF00A896でradius8のボタン
             style: TextStyle(color: Color(0xFF00A896), fontSize: 12,),
             ),
@@ -464,7 +485,6 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
               ),
             ),
           );
-          
         },
         // return 
         // Container(
@@ -490,76 +510,84 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
     );
   }
 
-  Widget varietySelectButton(BuildContext context) {
+
+  Widget roastLevelSelectButton(BuildContext context) {
+    var roastLevel = [
+      Strings.addCofffeScreenRoastLevelPickerLight,
+      Strings.addCofffeScreenRoastLevelPickerMedium,
+      Strings.addCofffeScreenRoastLevelPickerDark,
+      Strings.addCofffeScreenRoastLevelPickerCinnamon,
+      Strings.addCofffeScreenRoastLevelPickerHigh,
+      Strings.addCofffeScreenRoastLevelPickerCity,
+      Strings.addCofffeScreenRoastLevelPickerFullCity,
+      Strings.addCofffeScreenRoastLevelPickerItalian,
+    ];
+
     return TextButton(
       onPressed: () {
         final select = showDialog(context: context, builder: (context) {
           return SimpleDialog(
-            title: Text('Variety'),
+            title: Text(Strings.addCofffeScreenRoastLevelPickerTitle),
             children: [
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'Typica';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('Typica'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'Bourbon';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('Bourbon'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'Caturra';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('Caturra'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'SL28';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('SL28'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'Geisha';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('Geisha'),
-              ),
-              // Heirloom品種
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'Heirloom';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('Heirloom'),
-              ),
-              // Robusta品種
-              SimpleDialogOption(
-                onPressed: () {
-                  _variety = 'Robusta';
-                  _varietyController.text = _variety!;
-                  Navigator.pop(context);
-                },
-                child: Text('Robusta'),
-              ),
+              //for inでリストを回してSimpleDialogOptionを作成
+              for (var roast in roastLevel)
+                SimpleDialogOption(
+                  onPressed: () {
+                    _roastLevel = roast;
+                    Navigator.pop(context);
+                  },
+                  child: Text(roast),
+                ),
             ],
           );
         });
       },
-      child: Text('候補から選択', style: TextStyle(fontSize: 12)),
+      child: Text(Strings.addCofffeScreenRoastLevelPickerLabel, style: TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      ),
+    );
+  }
+
+
+  Widget varietySelectButton(BuildContext context) {
+    var varietyList = [
+      Strings.addCofffeScreenVarietyPickerTypica,
+      Strings.addCofffeScreenVarietyPickerBourbon,
+      Strings.addCofffeScreenVarietyPickerCaturra,
+      Strings.addCofffeScreenVarietyPickerCatuai,
+      Strings.addCofffeScreenVarietyPickerSL28,
+      Strings.addCofffeScreenVarietyPickerSL34,
+      Strings.addCofffeScreenVarietyPickerGeisha,
+      Strings.addCofffeScreenVarietyPickerMundoNovo,
+      Strings.addCofffeScreenVarietyPickerPacamara,
+      Strings.addCofffeScreenVarietyPickerMaragogipe,
+      Strings.addCofffeScreenVarietyPickerPacas,
+      Strings.addCofffeScreenVarietyPickerHeirloom,
+      Strings.addCofffeScreenVarietyPickerRobusta,
+      
+    ];
+    return TextButton(
+      onPressed: () {
+        final select = showDialog(context: context, builder: (context) {
+          return SimpleDialog(
+            title: Text(Strings.addCofffeScreenVarietyPickerTitle),
+            children: [
+              //for inでリストを回してSimpleDialogOptionを作成
+              for (var variety in varietyList)
+                SimpleDialogOption(
+                  onPressed: () {
+                    _variety = variety;
+                    _varietyController.text = _variety!;
+                    Navigator.pop(context);
+                  },
+                  child: Text(variety),
+                ),
+            ],
+          );
+        });
+      },
+      child: Text(Strings.addCofffeScreenVarietyPickerLabel, style: TextStyle(fontSize: 12)),
       style: OutlinedButton.styleFrom(
         padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
       ),
@@ -567,57 +595,37 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   }
 
   Widget processSelectButton(BuildContext context) {
+    var processList = [
+      Strings.addCofffeScreenProcessPickerWashed,
+      Strings.addCofffeScreenProcessPickerNatural,
+      Strings.addCofffeScreenProcessPickerHoney,
+      Strings.addCofffeScreenProcessPickerAnaerobic,
+      Strings.addCofffeScreenProcessPickerCarbonicMaceration,
+      Strings.addCofffeScreenProcessPickerSemiWashed,
+      Strings.addCofffeScreenProcessPickerFullyWashed,
+      Strings.addCofffeScreenProcessPickerPulpedNatural,      
+    ];
     return TextButton(
       onPressed: () {
         final select = showDialog(context: context, builder: (context) {
           return SimpleDialog(
-            title: Text('Process'),
+            title: Text(Strings.addCofffeScreenProcessPickerTitle),
             children: [
-              SimpleDialogOption(
-                onPressed: () {
-                  _process = 'Washed';
-                  _processController.text = _process!;
-                  Navigator.pop(context);
-                },
-                child: Text('Washed'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _process = 'Natural';
-                  _processController.text = _process!;
-                  Navigator.pop(context);
-                },
-                child: Text('Natural'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _process = 'Honey';
-                  _processController.text = _process!;
-                  Navigator.pop(context);
-                },
-                child: Text('Honey'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _process = 'Anaerobic';
-                  _processController.text = _process!;
-                  Navigator.pop(context);
-                },
-                child: Text('Anaerobic'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  _process = 'Carbonic Maceration';
-                  _processController.text = _process!;
-                  Navigator.pop(context);
-                },
-                child: Text('Carbonic Maceration'),
-              ),
+              //for inでリストを回してSimpleDialogOptionを作成
+              for (var process in processList)
+                SimpleDialogOption(
+                  onPressed: () {
+                    _process = process;
+                    _processController.text = _process!;
+                    Navigator.pop(context);
+                  },
+                  child: Text(process),
+                ),                
             ],
           );
         });
       },
-      child: Text('候補から選択', style: TextStyle(fontSize: 12)),
+      child: Text(Strings.addCofffeScreenProcessPickerLabel, style: TextStyle(fontSize: 12)),
       style: OutlinedButton.styleFrom(
         padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
       ),
