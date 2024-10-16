@@ -56,3 +56,9 @@ lib/firebase_options.dart
 lib/google_map_options.dart
 google-services.json
 GoogleService-Info.plist
+ios/Podfile
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+macos/Podfile
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/Flutter-Release.xcconfig

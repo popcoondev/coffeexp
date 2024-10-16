@@ -1,23 +1,25 @@
 class Coffee {
-  String name;
+  String coffeeName;
   String? origin;
   String? region;
+  String? farm;
+  String? altitude;
   String? variety;
   String? process;
-  String? farm;
   String? storeName;
   String? storeLocation;
   String? storeWebsite;
   String? roastLevel;
-  DateTime? roastDate;
+  String? roastDate;
 
   Coffee({
-    required this.name,
+    required this.coffeeName,
     this.origin,
     this.region,
+    this.farm,
+    this.altitude,
     this.variety,
     this.process,
-    this.farm,
     this.storeName,
     this.storeLocation,
     this.storeWebsite,
@@ -27,17 +29,18 @@ class Coffee {
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'coffeeName': coffeeName,
       'origin': origin,
       'region': region,
+      'farm': farm,
+      'altitude': altitude,
       'variety': variety,
       'process': process,
-      'farm': farm,
       'storeName': storeName,
       'storeLocation': storeLocation,
       'storeWebsite': storeWebsite,
       'roastLevel': roastLevel,
-      'roastDate': roastDate?.toIso8601String(),
+      'roastDate': roastDate,
     };
   }
 }
