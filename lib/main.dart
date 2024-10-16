@@ -8,7 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'google_map_options.dart';
 import 'screens/home_screen.dart';
-import 'dart:html' as html;
+// import 'dart:html' as html;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/login_signup_screen';
@@ -20,16 +20,16 @@ void main() async {
   );
 
   // Firebase Remote Configを使用してGoogle Maps APIキーを取得
-  if(false) {
-    final remoteConfig = FirebaseRemoteConfig.instance;
-    String googleMapsApiKey = remoteConfig.getString('google_maps_api_key');
-    // JavaScriptでGoogle Maps APIスクリプトを動的に追加
-    final script = html.ScriptElement();
-    // script.src = 'https://maps.googleapis.com/maps/api/js?key=$googleMapsApiKey';
-    script.src = testGoogleMapsApiKey;
-    html.document.head?.append(script);
-    print('Google Maps API key: $googleMapsApiKey');
-  }
+  // if(false) {
+  //   final remoteConfig = FirebaseRemoteConfig.instance;
+  //   String googleMapsApiKey = remoteConfig.getString('google_maps_api_key');
+  //   // JavaScriptでGoogle Maps APIスクリプトを動的に追加
+  //   final script = html.ScriptElement();
+  //   // script.src = 'https://maps.googleapis.com/maps/api/js?key=$googleMapsApiKey';
+  //   script.src = testGoogleMapsApiKey;
+  //   html.document.head?.append(script);
+  //   print('Google Maps API key: $googleMapsApiKey');
+  // }
 
   // ローカルエミュレーターを使用する場合はtrueに設定
   if(false) {
