@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // ユーザーがログインしていない場合はログイン画面に遷移
       if (FirebaseAuth.instance.currentUser == null) {
         print('User is not signed in');
-        Navigator.pushNamed(context, '/login_signup');
+        Navigator.pushReplacementNamed(context, '/login_signup');
       }
       else {
         print('User is signed in as ${FirebaseAuth.instance.currentUser!.email}');
@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(Strings.homeScreenAlertDialogSignOut),
                           onPressed: () async {
                             await FirebaseAuth.instance.signOut();
-                            Navigator.pushReplacementNamed(context, '/login_signup');
+                            Navigator.pushNamedAndRemoveUntil(context, '/login_signup', (route) => false);
                           },
                         ),
                       ],
