@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../utils/strings.dart';
 import 'add_coffee_screen.dart';
 import 'coffee_card_screen.dart';
 
@@ -31,13 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
+      key: Key('home_screen'),
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('coffeExp'),
+          title: Text(Strings.homeScreenAppBarTitle),
           actions: [
             //user icon
             TextButton(
+              key: Key('user_icon'),
               child: 
                 Row(children: [
                   Icon(Icons.account_circle),
@@ -49,20 +52,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: Text('Account'),
-                      content: Text('Email: ${FirebaseAuth.instance.currentUser!.email}'),
+                      key: Key('alert_dialog'),
+                      title: Text(Strings.homeScreenAlertDialogTitle),
+                      content: Text('${Strings.homeScreenAlertDialogContent} ${FirebaseAuth.instance.currentUser!.email}'),
                       actions: [
                         TextButton(
-                          child: Text('Cancel'),
+                          key: Key('alert_dialog_cancel'),
+                          child: Text(Strings.homeScreenAlertDialogCancel),
                           onPressed: () {
                             Navigator.pop(context);
                           },
                         ),
                         TextButton(
-                          child: Text('Sign out'),
+                          key: Key('alert_dialog_sign_out'),
+                          child: Text(Strings.homeScreenAlertDialogSignOut),
                           onPressed: () async {
                             await FirebaseAuth.instance.signOut();
-                            Navigator.pushReplacementNamed(context, '/login_signup');
+                            Navigator.pushNamedAndRemoveUntil(context, '/login_signup', (route) => false);
                           },
                         ),
                       ],
@@ -72,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),           
             IconButton(
+              key: Key('change_view_button'),
               icon: Icon(isListView ? Icons.grid_view : Icons.list),
               onPressed: () {
                 setState(() {
@@ -80,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             IconButton(
+              key: Key('menu_button'),
               icon: Icon(Icons.menu),
               onPressed: () {
                 // メニューの操作を実装予定
@@ -88,18 +96,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           bottom: TabBar(
             tabs: [
-              Tab(text: 'My Coffees'),
-              Tab(text: 'Favorites'),
+              Tab(text: Strings.homeScreenTabBarMyCoffees, key: Key('my_coffees_tab')),
+              Tab(text: Strings.homeScreenTabBarFavorites, key: Key('favorites_tab')),
             ],
           ),
         ),
         body: TabBarView(
           children: [
             isListView ? CoffeeListView() : CoffeeGridView(),
-            Center(child: Text('Favorites will be implemented here')),
+            Center(child: Text('Favorites will be implemented here'), key: Key('favorites_tab_view')),
           ],
         ),
         floatingActionButton: FloatingActionButton(
+          key: Key('add_coffee_button'),
           onPressed: () {
             Navigator.push(
               context,
@@ -118,10 +127,11 @@ class CoffeeListView extends StatelessWidget {
   Widget build(BuildContext context) {
     // ユーザーのコーヒーデータをFirestoreから取得して表示する
     if (FirebaseAuth.instance.currentUser == null) {
-      return Center(child: Text('User is not signed in'));
+      return Center(child: Text(Strings.homeScreenUserAuthError));
     }
     else {
       return StreamBuilder<QuerySnapshot>(
+        key: Key('coffee_list_view'),
         stream: FirebaseFirestore.instance
           .collection('users')
           .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -132,7 +142,7 @@ class CoffeeListView extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No coffee data available.'));
+            return Center(child: Text(Strings.homeScreenUserCoffeeDataNone));
           }
 
           var coffeeList = snapshot.data!.docs;
@@ -142,18 +152,75 @@ class CoffeeListView extends StatelessWidget {
             print('coffee data: ${coffee.data()}');
           }
 
+          // _created_atの降順でソート
+          coffeeList.sort((a, b) {
+            return b['createdAt'].compareTo(a['createdAt']);
+          });
+
           // ListView.builder でデータを表示
           return ListView.builder(
+            key: Key('coffee_list'),
             itemCount: coffeeList.length,
             itemBuilder: (context, index) {
               var coffeeData = coffeeList[index].data() as Map<String, dynamic>;  // ここでMap<String, dynamic>にキャスト
-
+              coffeeData['documentId'] = coffeeList[index].id;  // ドキュメントIDを追加
+              
               // デバッグ: どのデータが取得できているか確認
-              print('Displaying coffee: ${coffeeData['name']}');
+              print('Displaying coffee: ${coffeeData['coffeeName']}');
 
               return ListTile(
-                title: Text(coffeeData['name'] ?? 'No name'),  // データがnullでないことを確認
-                subtitle: Text('Roast level: ${coffeeData['roastLevel'] ?? 'No level'}'),
+                key: Key('coffee_list_tile_$index'),
+                title: Text(coffeeData['coffeeName'] ?? 'No name'),  // データがnullでないことを確認
+                subtitle: 
+                  Container(
+                    padding: EdgeInsets.only(top: 8.0),
+                    alignment: Alignment.centerLeft,
+                    child: Column(children: [
+                      Text('${coffeeData['originCountryName'] ?? '' }, ${coffeeData['region'] ?? ''}'), 
+                      Text('${coffeeData['variety'] ?? ''}, ${coffeeData['process'] ?? ''}'),
+                      Text('Roast level: ${coffeeData['roastLevel'] ?? '-'}'),
+                      Text('Store Name: ${coffeeData['storeName'] ?? '-'}'),
+                    ],
+                    //左寄せ
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ),
+                trailing: Icon(Icons.arrow_forward_ios),
+                // ロングプレスで削除
+                onLongPress: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        key: Key('alert_dialog_$index'),
+                        title: Text('Delete coffee?'),
+                        content: Text('Do you want to delete ${coffeeData['coffeeName']}?'),
+                        actions: [
+                          TextButton(
+                            key: Key('alert_dialog_cancel_$index'),
+                            child: Text('Cancel'),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          TextButton(
+                            key: Key('alert_dialog_delete_$index'),
+                            child: Text('Delete'),
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .collection('coffees')
+                                .doc(coffeeList[index].id)
+                                .delete();
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
                 onTap: () {
                   // タップしたら詳細画面に遷移
                   Navigator.push(
@@ -177,6 +244,7 @@ class CoffeeGridView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      key: Key('coffee_grid_view'),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 8.0,
@@ -185,6 +253,7 @@ class CoffeeGridView extends StatelessWidget {
       itemCount: 10, // 仮のデータ数
       itemBuilder: (context, index) {
         return Card(
+          key: Key('coffee_card_$index'),
           margin: EdgeInsets.all(8.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

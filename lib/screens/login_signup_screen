@@ -104,7 +104,7 @@ class _LoginSignupScreenState extends State<LoginSignupScreen> {
         });
 
       }
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacementNamed('/');
     } catch (e) {
       print('Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
