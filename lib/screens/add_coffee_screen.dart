@@ -64,7 +64,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   final _storeWebsiteController = TextEditingController();
 
   bool _isAnalyzing = false;
-  final PhotoAnalysisService _photoAnalysisService = PhotoAnalysisService();
+  late final PhotoAnalysisService _photoAnalysisService;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     final String testUid = 'test_user_123';
@@ -90,6 +90,10 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   void initState() {
     super.initState();
     print('AddCoffeeScreen: initState');
+    
+    // PhotoAnalysisServiceのインスタンスを取得
+    _photoAnalysisService = PhotoAnalysisService.getInstance();
+    
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       // ユーザーがログインしていない場合はログイン画面に遷移
       if (FirebaseAuth.instance.currentUser == null) {

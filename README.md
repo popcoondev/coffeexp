@@ -70,6 +70,26 @@ flutter run
 5. 抽出された情報をJSON形式でアプリに返却
 6. ユーザーが内容を確認・編集して保存
 
+### Integration テスト
+
+本プロジェクトでは統合テストの仕組みを採用しています。テストは`test_driver`ディレクトリにあります。
+
+> **注意**: 現在、Flutter SDK 3.5.3と最新のFirebaseパッケージ（5.x系）との間に依存関係の不一致があるため、Gherkin/BDDテストは一時的に無効化されています。代わりに、FlutterDriverを直接使用したIntegrationテストに切り替えています。
+
+```bash
+# Integrationテストの実行
+flutter drive --target=test_driver/app.dart
+```
+
+詳細は `test_driver/README.md` を参照してください。
+
+主な特徴：
+- 日本語でのシナリオ記述（将来的にはGherkin形式へ）
+- Firebase関連サービスのモック
+- UIインタラクションのシミュレーション
+
+新機能を追加する際は、まずシナリオを書いてからコードを実装するワークフローをお勧めします。
+
 ### 動作確認方法
 
 Firebase Blaze プランにアップグレードできない場合:

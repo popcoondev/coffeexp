@@ -7,9 +7,38 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class PhotoAnalysisService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  // テストでモックに置き換えられるようにインスタンスを静的変数に
+  static PhotoAnalysisService? _instance;
+  
+  // テスト用にインスタンスを置き換えるメソッド
+  static void setMockInstance(PhotoAnalysisService mockService) {
+    _instance = mockService;
+  }
+  
+  // インスタンスの取得
+  static PhotoAnalysisService getInstance() {
+    return _instance ?? PhotoAnalysisService._();
+  }
+  
+  // テスト用にモック可能なようにprotected変数として公開
+  FirebaseAuth get auth => _auth;
+  FirebaseStorage get storage => _storage;
+  FirebaseFunctions get functions => _functions;
+  
+  // 内部で使用するプライベート変数
+  final FirebaseAuth _auth;
+  final FirebaseStorage _storage;
+  final FirebaseFunctions _functions;
+  
+  // プライベートコンストラクタ
+  PhotoAnalysisService._({
+    FirebaseAuth? auth, 
+    FirebaseStorage? storage,
+    FirebaseFunctions? functions
+  }) : 
+    _auth = auth ?? FirebaseAuth.instance,
+    _storage = storage ?? FirebaseStorage.instance,
+    _functions = functions ?? FirebaseFunctions.instance;
 
   // 画像アップロード処理
   Future<String> uploadImage(dynamic imageData) async {
