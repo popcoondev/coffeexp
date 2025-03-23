@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:html' as html;
 
-import 'package:coffeexp/utils/open_ai_service.dart';
+import '../services/photo_analysis_service.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -64,7 +64,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   final _storeWebsiteController = TextEditingController();
 
   bool _isAnalyzing = false;
-  final OpenAIService _openAIService = OpenAIService();
+  final PhotoAnalysisService _photoAnalysisService = PhotoAnalysisService();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     final String testUid = 'test_user_123';
@@ -447,62 +447,49 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   }
 
   Future<void> _pickImage() async {
-    // Webかモバイルかで処理を分岐
-    kIsWeb ? print('Web') : print('Mobile');
-    if (kIsWeb) {
-      // Web用の処理をここに記述する
-      //ImagePickerWebを使って画像を選択
-      Uint8List? imageFile = await ImagePickerWeb.getImageAsBytes();
+    setState(() {
+      _isAnalyzing = true;
+    });
+    
+    try {
+      dynamic imageFile;
+      
+      // Webかモバイルかで処理を分岐
+      if (kIsWeb) {
+        print('Using Web image picker');
+        // Web用の処理
+        imageFile = await ImagePickerWeb.getImageAsBytes();
+      } else {
+        print('Using Mobile image picker');
+        // モバイル用の処理
+        final ImagePicker picker = ImagePicker();
+        imageFile = await picker.pickImage(source: ImageSource.camera);
+      }
       
       if (imageFile != null) {
-        var metadata = SettableMetadata(
-          contentType: "image/jpeg",
-        );
         // 画像をFirebase Storageにアップロード
-        // match /user_files/{userId}/{allPaths=**} のルール
-        User? user = FirebaseAuth.instance.currentUser;
-        if (user == null) {
-          throw Exception("ユーザーがログインしていません。");
-        }
-        String filename = DateTime.now().millisecondsSinceEpoch.toString(); // ファイル名をミリ秒で生成
-        UploadTask task = FirebaseStorage.instance.ref('user_files/${user!.uid}/$filename').putData(imageFile, metadata);
-        TaskSnapshot ret = await task;
-        // 成功したかどうかを確認
-        if (ret.state == TaskState.success) {
-          print('Uploaded ${ret.totalBytes} bytes.');
-          String imageUrl = await ret.ref.getDownloadURL();
-          print('Image URL: $imageUrl');
-          //　数秒後まつ
-          await Future.delayed(Duration(seconds: 3));
-          _sendImageToOpenAI(imageUrl);
-        } else {
-          print('Upload failed');
-        }
+        String gsUrl = await _photoAnalysisService.uploadImage(imageFile);
+        print('Image uploaded successfully. GS URL: $gsUrl');
+        
+        // 画像分析サービスに送信
+        await _analyzePhoto(gsUrl);
+      } else {
+        print('No image selected');
+        setState(() {
+          _isAnalyzing = false;
+        });
       }
-
-      // if (imageFile != null) 
-      // {
-      //   // html.FileをFileに変換
-      //   File image = File(imageFile.relativePath!);
-      //   String imageUrl = await uploadImageToUserFolder(image);
-      //   print('Image URL: $imageUrl');
-
-      //   // // 選択された画像をbase64にエンコードして送信
-      //   // String imageUrl = await encodeImageWeb(imageFile);
-      //   // _sendImageToOpenAI(imageUrl);
-      // }
-    } else {
-      // モバイル用の処理をここに記述する
-      final ImagePicker _picker = ImagePicker();
-      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-
-      if (image != null) {
-        // 選択された画像をbase64にエンコードして送信
-        var base64Image = await image.readAsBytes();
-        String imageUrl = base64Encode(base64Image);
-
-        _sendImageToOpenAI(imageUrl);
-      }
+    } catch (e) {
+      print('Error picking or uploading image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('画像の選択またはアップロードに失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isAnalyzing = false;
+      });
     }
   }
 
@@ -546,159 +533,89 @@ Future<String> uploadImageToUserFolder(File image) async {
     return completer.future;
   }
 
-  Future<void> _sendImageToOpenAI(String imageUrl) async {
+  Future<void> _analyzePhoto(String imageUrl) async {
     setState(() {
       _isAnalyzing = true;
     });
     
-    try {
-      String prompt = ''' 
-この画像はスペシャリティコーヒーのパッケージに記載されている情報です。この画像からコーヒーの情報を抽出し、擬似的な情報を作り出すことなく、抽出できたテキストを次のフォーマットに従って返却してください。
-正しい情報が見つからない場合、そのフィールドは`null`を返してください。
-入力するフィールドは正確に対応させてください。必ず有効なJSONフォーマットで返してください。
-
-フォーマット:
-{
-  "coffeeName": "コーヒー名",
-  "originCountryName": "生産国名",
-  "originCountryCode": "生産国コード (例: +251 エチオピア)",
-  "region": "生産地域",
-  "farm": "生産農園 または プロデューサー名",
-  "altitude": "標高（m）",
-  "variety": "品種",
-  "process": "加工法",
-  "flavorNotes": "フレーバーノート (例: チョコレート、フルーティー)",
-  "storeName": "購入店名",
-  "storeLocation": "購入店住所",
-  "storeWebsite": "購入店のウェブサイト",
-  "roastLevel": "焙煎度合い",
-  "roastDate": "焙煎日 (例: YYYY/MM/DD)"
-}
-
-画像に記載されているテキストを正確に抽出してください。国名が見つかった場合は、対応する国コードも調査して入力してください。
-      ''';
-
-      await _openAIService.initialize();
-      if (!_openAIService.isConfigured()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('OpenAI APIキーが設定されていません。Firebase Remote Configで設定してください。'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() {
-          _isAnalyzing = false;
-        });
-        return;
-      }
-
-      // OpenAIに画像を送信
-      print('Sending image to OpenAI...');
-      String reply = await _openAIService.sendMessageWithImageToOpenAI(prompt, imageUrl);
-      print('Reply from OpenAI: $reply');
+    try {      
+      print('Using image URL for Gemini analysis: $imageUrl');
       
-      // JSONデータの開始と終了位置を探す
-      int startIndex = reply.indexOf('{');
-      int endIndex = reply.lastIndexOf('}') + 1;
+      // Gemini APIで画像分析
+      Map<String, dynamic> coffeeData = await _photoAnalysisService.analyzeCoffeePhoto(imageUrl);
+      print('Parsed coffee data: $coffeeData');
       
-      if (startIndex >= 0 && endIndex > startIndex) {
-        String jsonStr = reply.substring(startIndex, endIndex);
-        
-        try {
-          Map<String, dynamic> coffeeData = jsonDecode(jsonStr);
-          print('Parsed JSON data: $coffeeData');
-          
-          // フォームに値を自動入力
-          setState(() {
-            if (coffeeData['coffeeName'] != null) {
-              _coffeeNameController.text = coffeeData['coffeeName'];
-              _coffeeName = coffeeData['coffeeName'];
-            }
-            
-            if (coffeeData['originCountryName'] != null) {
-              _originCountryController.text = coffeeData['originCountryName'];
-              _originCountryName = coffeeData['originCountryName'];
-            }
-            
-            if (coffeeData['originCountryCode'] != null) {
-              _originCountryCode = coffeeData['originCountryCode'];
-            }
-            
-            if (coffeeData['region'] != null) {
-              _region = coffeeData['region'];
-              _regionController.text = coffeeData['region'];
-            }
-            
-            if (coffeeData['farm'] != null) {
-              _farm = coffeeData['farm'];
-              _farmController.text = coffeeData['farm'];
-            }
-            
-            if (coffeeData['altitude'] != null) {
-              _altitude = coffeeData['altitude'];
-              _altitudeController.text = coffeeData['altitude'];
-            }
-            
-            if (coffeeData['variety'] != null) {
-              _variety = coffeeData['variety'];
-              _varietyController.text = coffeeData['variety'];
-            }
-            
-            if (coffeeData['process'] != null) {
-              _process = coffeeData['process'];
-              _processController.text = coffeeData['process'];
-            }
-            
-            if (coffeeData['flavorNotes'] != null) {
-              _flavorNotes = coffeeData['flavorNotes'];
-              _flavorNotesController.text = coffeeData['flavorNotes'];
-            }
-            
-            if (coffeeData['storeName'] != null) {
-              _storeName = coffeeData['storeName'];
-              _storeNameController.text = coffeeData['storeName'];
-            }
-            
-            if (coffeeData['storeWebsite'] != null) {
-              _storeWebsite = coffeeData['storeWebsite'];
-              _storeWebsiteController.text = coffeeData['storeWebsite'];
-            }
-            
-            if (coffeeData['roastLevel'] != null) {
-              _roastLevel = coffeeData['roastLevel'];
-              _roastLevelController.text = coffeeData['roastLevel'];
-            }
-            
-            if (coffeeData['roastDate'] != null) {
-              _roastDate = coffeeData['roastDate'];
-              _roastDateController.text = coffeeData['roastDate'];
-            }
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('画像解析が完了しました！情報を確認・編集してください。'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } catch (e) {
-          print('Error parsing JSON: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('画像解析結果のパースに失敗しました: $e'),
-              backgroundColor: Colors.orange,
-            ),
-          );
+      // データが空かどうかをチェック
+      bool hasData = false;
+      coffeeData.forEach((key, value) {
+        if (value != null && value.toString().isNotEmpty) {
+          hasData = true;
         }
-      } else {
-        print('No valid JSON found in the response');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('画像からコーヒー情報を抽出できませんでした。別の画像を試すか、手動で入力してください。'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+      });
+      
+      if (!hasData) {
+        throw Exception("画像から有効なデータを抽出できませんでした。別の画像を試してください。");
       }
+      
+      // フォームに値を自動入力
+      setState(() {
+        if (coffeeData['name'] != null && coffeeData['name'].toString().isNotEmpty) {
+          _coffeeNameController.text = coffeeData['name'];
+          _coffeeName = coffeeData['name'];
+        }
+        
+        if (coffeeData['country'] != null && coffeeData['country'].toString().isNotEmpty) {
+          _originCountryController.text = coffeeData['country'];
+          _originCountryName = coffeeData['country'];
+        }
+        
+        if (coffeeData['region'] != null && coffeeData['region'].toString().isNotEmpty) {
+          _region = coffeeData['region'];
+          _regionController.text = coffeeData['region'];
+        }
+        
+        if (coffeeData['farm'] != null && coffeeData['farm'].toString().isNotEmpty) {
+          _farm = coffeeData['farm'];
+          _farmController.text = coffeeData['farm'];
+        }
+        
+        if (coffeeData['elevation'] != null && coffeeData['elevation'].toString().isNotEmpty) {
+          _altitude = coffeeData['elevation'];
+          _altitudeController.text = coffeeData['elevation'];
+        }
+        
+        if (coffeeData['variety'] != null && coffeeData['variety'].toString().isNotEmpty) {
+          _variety = coffeeData['variety'];
+          _varietyController.text = coffeeData['variety'];
+        }
+        
+        if (coffeeData['process'] != null && coffeeData['process'].toString().isNotEmpty) {
+          _process = coffeeData['process'];
+          _processController.text = coffeeData['process'];
+        }
+        
+        if (coffeeData['flavorNotes'] != null && coffeeData['flavorNotes'].toString().isNotEmpty) {
+          _flavorNotes = coffeeData['flavorNotes'];
+          _flavorNotesController.text = coffeeData['flavorNotes'];
+        }
+        
+        if (coffeeData['roaster'] != null && coffeeData['roaster'].toString().isNotEmpty) {
+          _storeName = coffeeData['roaster'];
+          _storeNameController.text = coffeeData['roaster'];
+        }
+        
+        if (coffeeData['roastLevel'] != null && coffeeData['roastLevel'].toString().isNotEmpty) {
+          _roastLevel = coffeeData['roastLevel'];
+          _roastLevelController.text = coffeeData['roastLevel'];
+        }
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('画像解析が完了しました！情報を確認・編集してください。'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       print('Error during image analysis: $e');
       ScaffoldMessenger.of(context).showSnackBar(

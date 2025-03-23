@@ -1,1 +1,11 @@
-{}
+{
+  "parameters": {
+    "openai_api_key": {
+      "defaultValue": {
+        "value": "sk-yourapikey"
+      },
+      "description": "OpenAI API Key for image analysis",
+      "valueType": "STRING"
+    }
+  }
+}

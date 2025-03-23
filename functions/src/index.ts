@@ -1,64 +1,130 @@
-import * as z from "zod";
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-// Import the Genkit core libraries and plugins.
-import {generate} from "@genkit-ai/ai";
-import {configureGenkit} from "@genkit-ai/core";
-import {firebase} from "@genkit-ai/firebase";
+admin.initializeApp();
 
-// From the Firebase plugin, import the functions needed to deploy flows using
-// Cloud Functions.
-import {firebaseAuth} from "@genkit-ai/firebase/auth";
-import {onFlow} from "@genkit-ai/firebase/functions";
+// Gemini APIの設定
+const configureGeminiAPI = () => {
+  const apiKey = functions.config().gemini?.api_key;
+  if (!apiKey) {
+    throw new Error("Gemini API key is not configured. Set it using: firebase functions:config:set gemini.api_key=YOUR_API_KEY");
+  }
+  return new GoogleGenerativeAI(apiKey);
+};
 
-configureGenkit({
-  plugins: [
-    // Load the Firebase plugin, which provides integrations with several
-    // Firebase services.
-    firebase(),
-  ],
-  // Log debug output to tbe console.
-  logLevel: "debug",
-  // Perform OpenTelemetry instrumentation and enable trace collection.
-  enableTracingAndMetrics: true,
+// リモートコンフィグが更新されたときに呼び出される関数
+export const logRemoteConfigUpdate = functions.remoteConfig.onUpdate(async (versionMetadata) => {
+  functions.logger.info("Remote Config updated", {
+    versionNumber: versionMetadata.versionNumber,
+    updateTime: versionMetadata.updateTime,
+    updateUser: versionMetadata.updateUser,
+    description: versionMetadata.description,
+  });
+  
+  return null;
 });
 
-// Define a simple flow that prompts an LLM to generate menu suggestions.
-export const menuSuggestionFlow = onFlow(
-  {
-    name: "menuSuggestionFlow",
-    inputSchema: z.string(),
-    outputSchema: z.string(),
-    authPolicy: firebaseAuth((user) => {
-      // By default, the firebaseAuth policy requires that all requests have an
-      // `Authorization: Bearer` header containing the user's Firebase
-      // Authentication ID token. All other requests are rejected with error
-      // 403. If your app client uses the Cloud Functions for Firebase callable
-      // functions feature, the library automatically attaches this header to
-      // requests.
+// 写真分析関数
+export const analyzeCoffeePhoto = functions.https.onCall(async (data, context) => {
+  try {
+    // 認証チェック
+    if (!context.auth) {
+      throw new Error("認証が必要です");
+    }
 
-      // You should also set additional policy requirements as appropriate for
-      // your app. For example:
-      // if (!user.email_verified) {
-      //   throw new Error("Verified email required to run flow");
-      // }
-    }),
-  },
-  async (subject) => {
-    // Construct a request and send it to the model API.
-    const prompt =
-      `Suggest an item for the menu of a ${subject} themed restaurant`;
-    const llmResponse = await generate({
-      model: "" /* TODO: Set a model. */,
-      prompt: prompt,
-      config: {
-        temperature: 1,
+    const { imageUrl } = data;
+    if (!imageUrl) {
+      throw new Error("画像URLが必要です");
+    }
+
+    // 画像データの取得
+    let imageData;
+    try {
+      // Firebase Storageから画像データを取得
+      const bucket = admin.storage().bucket();
+      const imagePath = imageUrl.replace('gs://', '').split('/').slice(1).join('/');
+      const [file] = await bucket.file(imagePath).download();
+      imageData = file.toString('base64');
+    } catch (error) {
+      console.error("画像の取得に失敗しました:", error);
+      throw new Error("画像の取得に失敗しました");
+    }
+
+    // Gemini APIの呼び出し
+    const genAI = configureGeminiAPI();
+    const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+
+    const prompt = `
+    以下のコーヒー豆のパッケージ写真を分析し、次の情報をJSON形式で返してください:
+    {
+      "name": "コーヒー豆の名前",
+      "roaster": "焙煎者の名前",
+      "country": "生産国",
+      "region": "生産地域",
+      "process": "精製方法",
+      "variety": "品種",
+      "elevation": "標高",
+      "roastLevel": "焙煎度合い(Light/Medium/Dark)"
+    }
+    
+    読み取れない情報がある場合は該当フィールドを空文字列("")としてください。
+    必ずJSON形式のみを返してください。
+    `;
+
+    const safetySettings = [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
       },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      },
+    ];
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { data: imageData, mimeType: "image/jpeg" } }] }],
+      safetySettings,
     });
 
-    // Handle the response from the model API. In this sample, we just
-    // convert it to a string, but more complicated flows might coerce the
-    // response into structured output or chain the response into another
-    // LLM call, etc.
-    return llmResponse.text();
+    const response = result.response;
+    const responseText = response.text();
+    
+    // JSONレスポンスの抽出
+    let jsonData = {};
+    try {
+      // 文字列からJSONを抽出
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonData = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("JSONデータが見つかりませんでした");
+      }
+    } catch (error) {
+      console.error("JSONの解析に失敗しました:", error, responseText);
+      throw new Error("解析結果の処理に失敗しました");
+    }
+
+    return {
+      success: true,
+      data: jsonData
+    };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "写真の分析中にエラーが発生しました";
+    functions.logger.error("写真分析エラー:", error);
+    return {
+      success: false,
+      error: errorMessage
+    };
   }
-);
+});

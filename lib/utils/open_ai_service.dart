@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:coffeexp/open_ai_options.dart';
 import 'package:http/http.dart' as http;
 
@@ -116,6 +117,14 @@ class OpenAIService {
   // 実際のAPI通信を行う内部メソッド
   Future<String> _sendRequest() async {
     try {
+      // APIキーが有効かどうかをチェック
+      if (_apiKey == 'missing-api-key-please-set-in-firebase-remote-config' || 
+          _apiKey.isEmpty || 
+          !_apiKey.startsWith('sk-')) {
+        print('Invalid API key format: $_apiKey');
+        return 'Error: Invalid API key format. Please check your OpenAI API key configuration.';
+      }
+
       final headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $_apiKey',
@@ -129,6 +138,9 @@ class OpenAIService {
       });
 
       print('Sending request to OpenAI...');
+      print('API Key (first 4 chars): ${_apiKey.substring(0, math.min(4, _apiKey.length))}...');
+      print('Request body: $body');
+      
       final response = await http.post(
         Uri.parse(_apiUrl), 
         headers: headers, 
@@ -146,9 +158,22 @@ class OpenAIService {
         print('Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
         
-        if (response.statusCode == 401) {
-          return 'Error: Invalid API key. Please check your OpenAI API key configuration.';
-        } else {
+        try {
+          // レスポンスボディをJSONとしてパースしてエラーメッセージを取得
+          final errorJson = jsonDecode(response.body);
+          final errorMessage = errorJson['error']?['message'] ?? 'Unknown error';
+          
+          if (response.statusCode == 401) {
+            return 'Error: Authentication failed. Please check your OpenAI API key. Details: $errorMessage';
+          } else if (response.statusCode == 400) {
+            return 'Error: Bad request. Details: $errorMessage';
+          } else if (response.statusCode == 429) {
+            return 'Error: Rate limit exceeded or quota reached. Details: $errorMessage';
+          } else {
+            return 'Error: Failed to get a response from OpenAI (status code: ${response.statusCode}). Details: $errorMessage';
+          }
+        } catch (e) {
+          // JSONのパースに失敗した場合
           return 'Error: Failed to get a response from OpenAI (status code: ${response.statusCode})';
         }
       }
