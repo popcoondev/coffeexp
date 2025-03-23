@@ -56,7 +56,14 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
   final _roastLevelController = TextEditingController();
   final _processController = TextEditingController();
   final _varietyController = TextEditingController();
+  final _regionController = TextEditingController();
+  final _farmController = TextEditingController();
+  final _altitudeController = TextEditingController();
+  final _flavorNotesController = TextEditingController();
+  final _storeNameController = TextEditingController();
+  final _storeWebsiteController = TextEditingController();
 
+  bool _isAnalyzing = false;
   final OpenAIService _openAIService = OpenAIService();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -174,6 +181,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                   ),
                   Label(mainText: Strings.addCofffeScreenRegionFormLabel, subText: Strings.addCofffeScreenRegionFormLabelSub),
                   TextFormField(
+                    controller: _regionController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: (value) {
                       return null;
@@ -182,9 +190,13 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       print('onSaved: $value');
                       _region = value;
                     },
+                    onChanged: (value) {
+                      _region = value;
+                    },
                   ),
                   Label(mainText: Strings.addCofffeScreenFarmFormLabel, subText: Strings.addCofffeScreenFarmFormLabelSub),
                   TextFormField(
+                    controller: _farmController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: (value) {
                       return null;
@@ -193,15 +205,23 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       print('onSaved: $value');
                       _farm = value;
                     },
+                    onChanged: (value) {
+                      _farm = value;
+                    },
                   ),
                   Label(mainText: Strings.AddCoffeeScreenAltitudeFormLabel, subText: Strings.AddCoffeeScreenAltitudeFormLabelSub),
                   TextFormField(
+                    controller: _altitudeController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
+                    keyboardType: TextInputType.number,
                     validator: (value) {
                       return null;
                     },
                     onSaved: (value) {
                       print('onSaved: $value');
+                      _altitude = value;
+                    },
+                    onChanged: (value) {
                       _altitude = value;
                     },
                   ),
@@ -260,6 +280,7 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                 children: [
                   Label(mainText: Strings.AddCoffeeScreenFlavorNotesFormLabel, subText: Strings.AddCoffeeScreenFlavorNotesFormLabelSub),
                   TextFormField(
+                    controller: _flavorNotesController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     maxLines: 3,
                     validator: (value) {
@@ -270,6 +291,9 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                       return null;
                     },
                     onSaved: (value) {
+                      _flavorNotes = value;
+                    },
+                    onChanged: (value) {
                       _flavorNotes = value;
                     },
                   ),
@@ -354,67 +378,29 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
                 children: [
                   Label(mainText: Strings.AddCoffeeScreenStoreNameFormLabel, subText: Strings.AddCoffeeScreenStoreNameFormLabelSub),
                   TextFormField(
+                    controller: _storeNameController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
                     onSaved: (value) {
+                      _storeName = value;
+                    },
+                    onChanged: (value) {
                       _storeName = value;
                     },
                   ),
                 ],
               ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Store Location', subText: '店舗所在地'),
-              //     TextFormField(
-              //       onSaved: (value) {
-              //         _storeLocation = value;
-              //       },
-              //     ),
-              //   ],
-              // ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Store Photo', subText: '店舗写真'),
-              //     Container(
-              //       height: 150,
-              //       width: double.infinity,
-              //       color: Colors.grey[300],
-              //       child: Center(child: Text('No Photo Selected')),
-              //     ),
-              //     ElevatedButton(
-              //       onPressed: () {
-              //         // 写真選択の実装予定
-              //       },
-              //       child: Text('Add Photo'),
-              //     ),
-              //   ],
-              // ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Label(mainText: 'Store Map', subText: '店舗地図情報'),
-              //     Container(
-              //       height: 150,
-              //       width: double.infinity,
-              //       color: Colors.grey[300],
-              //       child: Center(child: Text('Map Not Available')),
-              //     ),
-              //     ElevatedButton(
-              //       onPressed: () {
-              //         // 地図情報の追加実装予定
-              //       },
-              //       child: Text('Add Map Information'),
-              //     ),
-              //   ],
-              // ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Label(mainText: Strings.AddCoffeeScreenStoreWebSiteFormLabel, subText: Strings.AddCoffeeScreenStoreWebSiteFormLabelSub),
                   TextFormField(
+                    controller: _storeWebsiteController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
+                    keyboardType: TextInputType.url,
                     onSaved: (value) {
+                      _storeWebsite = value;
+                    },
+                    onChanged: (value) {
                       _storeWebsite = value;
                     },
                   ),
@@ -444,15 +430,17 @@ class _AddCoffeeScreenState extends State<AddCoffeeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () async {
+          onPressed: _isAnalyzing ? null : () async {
             // 写真から情報を取得する処理を実装
             _pickImage();
-            // String reply = await _openAIService.sendMessageToOpenAI("hello");
-            // print("Reply: $reply");
-
           },
-          child: Icon(Icons.camera_alt),
-          tooltip: Strings.addCofffeScreenFloatingActionButtonToolTip,
+          backgroundColor: _isAnalyzing ? Colors.grey : null,
+          child: _isAnalyzing 
+            ? CircularProgressIndicator(color: Colors.white)
+            : Icon(Icons.camera_alt),
+          tooltip: _isAnalyzing 
+            ? '画像解析中...' 
+            : Strings.addCofffeScreenFloatingActionButtonToolTip,
         ),
       
     );
@@ -559,16 +547,21 @@ Future<String> uploadImageToUserFolder(File image) async {
   }
 
   Future<void> _sendImageToOpenAI(String imageUrl) async {
-    String text = ''' 
-この画像はスペシャリティコーヒーの情報が記載されています。この画像からコーヒーの情報を抽出し、擬似的な情報を作り出すことなく、抽出できたテキストを次のフォーマットに従って返却してください。
+    setState(() {
+      _isAnalyzing = true;
+    });
+    
+    try {
+      String prompt = ''' 
+この画像はスペシャリティコーヒーのパッケージに記載されている情報です。この画像からコーヒーの情報を抽出し、擬似的な情報を作り出すことなく、抽出できたテキストを次のフォーマットに従って返却してください。
 正しい情報が見つからない場合、そのフィールドは`null`を返してください。
-入力するフィールドは正確に対応させてください。
+入力するフィールドは正確に対応させてください。必ず有効なJSONフォーマットで返してください。
 
 フォーマット:
 {
   "coffeeName": "コーヒー名",
   "originCountryName": "生産国名",
-  "originCountryCode": "生産国コード (例: +81)",
+  "originCountryCode": "生産国コード (例: +251 エチオピア)",
   "region": "生産地域",
   "farm": "生産農園 または プロデューサー名",
   "altitude": "標高（m）",
@@ -579,37 +572,146 @@ Future<String> uploadImageToUserFolder(File image) async {
   "storeLocation": "購入店住所",
   "storeWebsite": "購入店のウェブサイト",
   "roastLevel": "焙煎度合い",
-  "roastDate": "焙煎日 (例: YYYY/MM/DD)",
-  "createdAt": "作成日 (nullまたは自動生成)",
-  "updatedAt": "更新日 (nullまたは自動生成)"
+  "roastDate": "焙煎日 (例: YYYY/MM/DD)"
 }
 
-例:
-{
-  "coffeeName": "Ethiopia Guji",
-  "originCountryName": "エチオピア",
-  "originCountryCode": "+251",
-  "region": "グジ",
-  "farm": "ゲデブ農園",
-  "altitude": "2000",
-  "variety": "Heirloom",
-  "process": "ナチュラル",
-  "flavorNotes": "ベリー, チョコレート, フローラル",
-  "storeName": "カフェABC",
-  "storeLocation": "東京都渋谷区道玄坂2丁目",
-  "storeWebsite": "https://cafeabc.com",
-  "roastLevel": "ミディアムロースト",
-  "roastDate": "2023/05/15",
-  "createdAt": null,
-  "updatedAt": null
-}
-    ''';
+画像に記載されているテキストを正確に抽出してください。国名が見つかった場合は、対応する国コードも調査して入力してください。
+      ''';
 
-    // OpenAIに画像を送信
-    String content = _openAIService.buildMessageContent(text, imageUrl);
-    String reply = await _openAIService.sendMessageToOpenAI(content);
-    print('Reply: $reply');
+      await _openAIService.initialize();
+      if (!_openAIService.isConfigured()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('OpenAI APIキーが設定されていません。Firebase Remote Configで設定してください。'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isAnalyzing = false;
+        });
+        return;
+      }
 
+      // OpenAIに画像を送信
+      print('Sending image to OpenAI...');
+      String reply = await _openAIService.sendMessageWithImageToOpenAI(prompt, imageUrl);
+      print('Reply from OpenAI: $reply');
+      
+      // JSONデータの開始と終了位置を探す
+      int startIndex = reply.indexOf('{');
+      int endIndex = reply.lastIndexOf('}') + 1;
+      
+      if (startIndex >= 0 && endIndex > startIndex) {
+        String jsonStr = reply.substring(startIndex, endIndex);
+        
+        try {
+          Map<String, dynamic> coffeeData = jsonDecode(jsonStr);
+          print('Parsed JSON data: $coffeeData');
+          
+          // フォームに値を自動入力
+          setState(() {
+            if (coffeeData['coffeeName'] != null) {
+              _coffeeNameController.text = coffeeData['coffeeName'];
+              _coffeeName = coffeeData['coffeeName'];
+            }
+            
+            if (coffeeData['originCountryName'] != null) {
+              _originCountryController.text = coffeeData['originCountryName'];
+              _originCountryName = coffeeData['originCountryName'];
+            }
+            
+            if (coffeeData['originCountryCode'] != null) {
+              _originCountryCode = coffeeData['originCountryCode'];
+            }
+            
+            if (coffeeData['region'] != null) {
+              _region = coffeeData['region'];
+              _regionController.text = coffeeData['region'];
+            }
+            
+            if (coffeeData['farm'] != null) {
+              _farm = coffeeData['farm'];
+              _farmController.text = coffeeData['farm'];
+            }
+            
+            if (coffeeData['altitude'] != null) {
+              _altitude = coffeeData['altitude'];
+              _altitudeController.text = coffeeData['altitude'];
+            }
+            
+            if (coffeeData['variety'] != null) {
+              _variety = coffeeData['variety'];
+              _varietyController.text = coffeeData['variety'];
+            }
+            
+            if (coffeeData['process'] != null) {
+              _process = coffeeData['process'];
+              _processController.text = coffeeData['process'];
+            }
+            
+            if (coffeeData['flavorNotes'] != null) {
+              _flavorNotes = coffeeData['flavorNotes'];
+              _flavorNotesController.text = coffeeData['flavorNotes'];
+            }
+            
+            if (coffeeData['storeName'] != null) {
+              _storeName = coffeeData['storeName'];
+              _storeNameController.text = coffeeData['storeName'];
+            }
+            
+            if (coffeeData['storeWebsite'] != null) {
+              _storeWebsite = coffeeData['storeWebsite'];
+              _storeWebsiteController.text = coffeeData['storeWebsite'];
+            }
+            
+            if (coffeeData['roastLevel'] != null) {
+              _roastLevel = coffeeData['roastLevel'];
+              _roastLevelController.text = coffeeData['roastLevel'];
+            }
+            
+            if (coffeeData['roastDate'] != null) {
+              _roastDate = coffeeData['roastDate'];
+              _roastDateController.text = coffeeData['roastDate'];
+            }
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('画像解析が完了しました！情報を確認・編集してください。'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } catch (e) {
+          print('Error parsing JSON: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('画像解析結果のパースに失敗しました: $e'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        print('No valid JSON found in the response');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('画像からコーヒー情報を抽出できませんでした。別の画像を試すか、手動で入力してください。'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error during image analysis: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('画像分析中にエラーが発生しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isAnalyzing = false;
+      });
+    }
   }
 
   // Future<void> uploadImage(File imageFile) async {
@@ -890,36 +992,96 @@ Future<String> uploadImageToUserFolder(File image) async {
     );
   }
 
-  void addCoffeeData(Coffee newCoffee) {
+  void addCoffeeData(Coffee newCoffee) async {
     print('Adding new coffee...');
-    _firestore.collection('users').doc(user!.uid).collection('coffees').add(newCoffee.toJson()).then((value) {
-      print('Coffee added successfully. Doc id : ${value.id}');
+    
+    try {
+      // ユーザーが認証されていることを確認
+      if (user == null) {
+        user = FirebaseAuth.instance.currentUser;
+        
+        if (user == null) {
+          throw Exception('ユーザーが認証されていません。ログインしてください。');
+        }
+      }
+      
+      // users/{uid}ドキュメントが存在するか確認し、存在しなければ作成
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(user!.uid).get();
+      if (!userDoc.exists) {
+        await _firestore.collection('users').doc(user!.uid).set({
+          'email': user!.email,
+          'created_at': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      // coffeeデータを追加
+      DocumentReference docRef = await _firestore
+        .collection('users')
+        .doc(user!.uid)
+        .collection('coffees')
+        .add(newCoffee.toJson());
+        
+      print('Coffee added successfully. Doc id : ${docRef.id}');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Coffee added successfully')),
+        SnackBar(
+          content: Text('コーヒー情報が正常に追加されました'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
-    }).catchError((error) {
+      
+    } catch (error) {
       print('Failed to add coffee: $error');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add coffee: $error')),
+        SnackBar(
+          content: Text('コーヒー情報の追加に失敗しました: $error'),
+          backgroundColor: Colors.red,
+        ),
       );
-    });
+      
+      // エラーの詳細をコンソールに出力
+      print('Error details: $error');
+    }
   }
 
-  void updateCoffeeData(String documentId, Coffee newCoffee) {
+  void updateCoffeeData(String documentId, Coffee newCoffee) async {
     print('Updating coffee with id: $documentId');
-    _firestore.collection('users').doc(user!.uid).collection('coffees').doc(documentId).update(newCoffee.toJson()).then((value) {
+    
+    try {
+      // ユーザーが認証されていることを確認
+      if (user == null) {
+        user = FirebaseAuth.instance.currentUser;
+        
+        if (user == null) {
+          throw Exception('ユーザーが認証されていません。ログインしてください。');
+        }
+      }
+      
+      await _firestore
+        .collection('users')
+        .doc(user!.uid)
+        .collection('coffees')
+        .doc(documentId)
+        .update(newCoffee.toJson());
+        
       print('Coffee updated successfully. Doc id : $documentId');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Coffee updated successfully')),
+        SnackBar(
+          content: Text('コーヒー情報が正常に更新されました'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
-    }).catchError((error) {
+      
+    } catch (error) {
       print('Failed to update coffee: $error');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update coffee: $error')),
+        SnackBar(
+          content: Text('コーヒー情報の更新に失敗しました: $error'),
+          backgroundColor: Colors.red,
+        ),
       );
-    });
+    }
   }
 
   void fetchCoffeeData(String documentId) {

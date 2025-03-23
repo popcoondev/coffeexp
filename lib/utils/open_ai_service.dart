@@ -7,12 +7,48 @@ class OpenAIService {
   // OpenAI APIエンドポイント
   final String _apiUrl = 'https://api.openai.com/v1/chat/completions';
 
-  // あなたのOpenAI APIキー
-  final String _apiKey = openai_apikey;
+  // APIキーを保持する変数
+  late String _apiKey;
+  bool _isInitialized = false;
 
   // 会話履歴を保持するリスト
-  List<Map<String, String>> _messages = [];
+  List<Map<String, dynamic>> _messages = [];
 
+  // サービスの初期化
+  Future<void> initialize() async {
+    if (!_isInitialized) {
+      _apiKey = await getOpenAIApiKey();
+      _isInitialized = true;
+    }
+  }
+
+  // メッセージ内容を構築するメソッド
+  Map<String, dynamic> buildMessageMap(String text, String? imageUrl) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": text,
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": imageUrl,
+            },
+          }
+        ]
+      };
+    } else {
+      return {
+        "role": "user",
+        "content": text,
+      };
+    }
+  }
+
+  // 画像付きメッセージの内容を構築する（レガシーサポート用）
   String buildMessageContent(String text, String imageUrl) {
     return jsonEncode([
       {
@@ -22,17 +58,36 @@ class OpenAIService {
       if (imageUrl.isNotEmpty) {
         "type": "image_url",
         "image_url": {
-            "url": imageUrl,
-          },
+          "url": imageUrl,
+        },
       }
     ]);
   }
 
-  // 会話履歴にメッセージを追加する関数
+  // 会話履歴にユーザーメッセージを追加する関数
   void addUserMessage(String message) {
     _messages.add({
       "role": "user",
       "content": message,
+    });
+  }
+
+  // 会話履歴に画像付きユーザーメッセージを追加する関数
+  void addUserMessageWithImage(String message, String imageUrl) {
+    _messages.add({
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": message,
+        },
+        {
+          "type": "image_url",
+          "image_url": {
+            "url": imageUrl,
+          }
+        }
+      ]
     });
   }
 
@@ -44,16 +99,22 @@ class OpenAIService {
     });
   }
 
-  // OpenAIとの通信を行う関数
+  // OpenAIとの通信を行う関数（テキストのみ）
   Future<String> sendMessageToOpenAI(String message) async {
-    // messageは次のようにimageを含むリクエストを送信することも可能
-    // {
-    //   "type": "image_url",
-    //   "image_url": {"url": imageUrls[0]},  // 1つ目の画像のURL
-    // },
+    await initialize();
+    addUserMessage(message);
+    return _sendRequest();
+  }
 
-    addUserMessage(message);  // ユーザーのメッセージを履歴に追加
+  // OpenAIとの通信を行う関数（画像付き）
+  Future<String> sendMessageWithImageToOpenAI(String message, String imageUrl) async {
+    await initialize();
+    addUserMessageWithImage(message, imageUrl);
+    return _sendRequest();
+  }
 
+  // 実際のAPI通信を行う内部メソッド
+  Future<String> _sendRequest() async {
     try {
       final headers = {
         'Content-Type': 'application/json',
@@ -61,37 +122,49 @@ class OpenAIService {
       };
 
       final body = jsonEncode({
-        "model": "gpt-4o-mini",  // 使用するモデル
+        "model": "gpt-4o-mini", // 使用するモデル
         "messages": _messages,  // 会話履歴を含めてリクエスト
-        "max_tokens": 300, // 応答の最大トークン数
-        // "temperature": 0.7, // 生成されるテキストの多様性を制御
+        "max_tokens": 1000,     // 応答の最大トークン数を増やした
+        "temperature": 0.7,     // 生成されるテキストの多様性を制御
       });
 
-      print('Request body: $body');
-      final response = await http.post(Uri.parse(_apiUrl), headers: headers, body: body);
+      print('Sending request to OpenAI...');
+      final response = await http.post(
+        Uri.parse(_apiUrl), 
+        headers: headers, 
+        body: body
+      );
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
         final replyMessage = jsonResponse['choices'][0]['message']['content'];
 
         addAssistantMessage(replyMessage);  // AIの応答を履歴に追加
-
         return replyMessage;
       } else {
         print('Error: Failed to get a response from OpenAI');
         print('Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
-        return 'Error: Failed to get a response from OpenAI (status code: ${response.statusCode})';
-
+        
+        if (response.statusCode == 401) {
+          return 'Error: Invalid API key. Please check your OpenAI API key configuration.';
+        } else {
+          return 'Error: Failed to get a response from OpenAI (status code: ${response.statusCode})';
+        }
       }
     } catch (error) {
+      print('Exception during OpenAI request: $error');
       return 'Error: $error';
     }
   }
 
-
-  // 会話履歴をリセットする関数（必要な場合）
+  // 会話履歴をリセットする関数
   void resetConversation() {
     _messages = [];
+  }
+
+  // APIキーが設定されているか確認
+  bool isConfigured() {
+    return _isInitialized && _apiKey != 'missing-api-key-please-set-in-firebase-remote-config';
   }
 }

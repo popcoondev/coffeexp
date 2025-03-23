@@ -3,42 +3,57 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'google_map_options.dart';
 import 'screens/home_screen.dart';
-// import 'dart:html' as html;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'screens/login_signup_screen';
 
+// リリースビルドでtrueに設定したい場合は、--dart-defineを使用する
+// flutter run --dart-define=USE_EMULATOR=true
+const bool USE_EMULATOR = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Firebase Remote Configを使用してGoogle Maps APIキーを取得
-  // if(false) {
-  //   final remoteConfig = FirebaseRemoteConfig.instance;
-  //   String googleMapsApiKey = remoteConfig.getString('google_maps_api_key');
-  //   // JavaScriptでGoogle Maps APIスクリプトを動的に追加
-  //   final script = html.ScriptElement();
-  //   // script.src = 'https://maps.googleapis.com/maps/api/js?key=$googleMapsApiKey';
-  //   script.src = testGoogleMapsApiKey;
-  //   html.document.head?.append(script);
-  //   print('Google Maps API key: $googleMapsApiKey');
-  // }
-
-  // ローカルエミュレーターを使用する場合はtrueに設定
-  if(false) {
-  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    
+    print('Firebase initialized successfully');
+    
+    // Firebase Remote Configの初期化と設定
+    final remoteConfig = FirebaseRemoteConfig.instance;
+    await remoteConfig.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(minutes: 1),
+      minimumFetchInterval: const Duration(hours: 1),
+    ));
+    
+    // デフォルト値の設定
+    await remoteConfig.setDefaults({
+      'google_maps_api_key': '',
+    });
+    
+    // 設定を取得
+    await remoteConfig.fetchAndActivate();
+    
+    // ローカルエミュレーターを使用する場合
+    if (USE_EMULATOR) {
+      print('Using Firebase emulators');
+      FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+      FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    }
+  } catch (e) {
+    print('Error initializing Firebase: $e');
   }
   
   runApp(MyApp());
-} 
+}
 
 class MyApp extends StatelessWidget {
   @override
