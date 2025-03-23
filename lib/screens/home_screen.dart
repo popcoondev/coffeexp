@@ -152,20 +152,75 @@ class CoffeeListView extends StatelessWidget {
             print('coffee data: ${coffee.data()}');
           }
 
+          // _created_atの降順でソート
+          coffeeList.sort((a, b) {
+            return b['createdAt'].compareTo(a['createdAt']);
+          });
+
           // ListView.builder でデータを表示
           return ListView.builder(
             key: Key('coffee_list'),
             itemCount: coffeeList.length,
             itemBuilder: (context, index) {
               var coffeeData = coffeeList[index].data() as Map<String, dynamic>;  // ここでMap<String, dynamic>にキャスト
-
+              coffeeData['documentId'] = coffeeList[index].id;  // ドキュメントIDを追加
+              
               // デバッグ: どのデータが取得できているか確認
               print('Displaying coffee: ${coffeeData['coffeeName']}');
 
               return ListTile(
                 key: Key('coffee_list_tile_$index'),
                 title: Text(coffeeData['coffeeName'] ?? 'No name'),  // データがnullでないことを確認
-                subtitle: Text('Roast level: ${coffeeData['roastLevel'] ?? 'No level'}'),
+                subtitle: 
+                  Container(
+                    padding: EdgeInsets.only(top: 8.0),
+                    alignment: Alignment.centerLeft,
+                    child: Column(children: [
+                      Text('${coffeeData['originCountryName'] ?? '' }, ${coffeeData['region'] ?? ''}'), 
+                      Text('${coffeeData['variety'] ?? ''}, ${coffeeData['process'] ?? ''}'),
+                      Text('Roast level: ${coffeeData['roastLevel'] ?? '-'}'),
+                      Text('Store Name: ${coffeeData['storeName'] ?? '-'}'),
+                    ],
+                    //左寄せ
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ),
+                trailing: Icon(Icons.arrow_forward_ios),
+                // ロングプレスで削除
+                onLongPress: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        key: Key('alert_dialog_$index'),
+                        title: Text('Delete coffee?'),
+                        content: Text('Do you want to delete ${coffeeData['coffeeName']}?'),
+                        actions: [
+                          TextButton(
+                            key: Key('alert_dialog_cancel_$index'),
+                            child: Text('Cancel'),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                          TextButton(
+                            key: Key('alert_dialog_delete_$index'),
+                            child: Text('Delete'),
+                            onPressed: () async {
+                              await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .collection('coffees')
+                                .doc(coffeeList[index].id)
+                                .delete();
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
                 onTap: () {
                   // タップしたら詳細画面に遷移
                   Navigator.push(

@@ -211,6 +211,24 @@ class Strings {
         desc: '',
       );
 
+  static String get AddCoffeeScreenFlavorNotesFormLabel => Intl.message(
+        'Flavor Notes',
+        name: 'AddCoffeeScreenFlavorNotesFormLabel',
+        desc: '',
+      );
+
+  static String get AddCoffeeScreenFlavorNotesFormLabelSub => Intl.message(
+        'フレーバーノート',
+        name: 'AddCoffeeScreenFlavorNotesFormLabelSub',
+        desc: '',
+      );
+
+  static String get AddCoffeeScreenFlavorNotesFormError => Intl.message(
+        'Please enter the flavor notes of the coffee',
+        name: 'AddCoffeeScreenFlavorNotesFormError',
+        desc: '',
+      );
+
   // list titles
   static String get addCofffeScreenRoastInformationLabel => Intl.message(
         'Roast Information',
