@@ -85,8 +85,8 @@ class PhotoAnalysisService {
   // Gemini APIを呼び出す処理
   Future<Map<String, dynamic>> analyzeCoffeePhoto(String imageUrl) async {
     try {
-      // 開発環境では、Firebase Functionsが設定されていない場合にダミーデータを返すロジック
-      bool useDummyData = true; // 本番環境では false に設定
+      // 本番環境設定に切り替え
+      bool useDummyData = false; // 本番環境用
       
       if (useDummyData) {
         // ダミーデータを返す（開発用）
